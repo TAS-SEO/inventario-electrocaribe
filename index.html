@@ -569,11 +569,12 @@ async function enviar(){
   if(!bodegaActual){showToast('⚠️ Selecciona una bodega');return;}
   const qty=parseInt(document.getElementById('qinp').value)||0;
   if(qty<1){showToast('⚠️ Ingresa cantidad mayor a 0');return;}
+  const p=prodActual;
   const entry={
     id:Date.now(),
-    codProducto:   p.codProducto,
+    codProducto:   p.codProducto||'',
     codAntiguo:    p.codAntiguo||'',
-    nombre:        p.nombre,
+    nombre:        p.nombre||'',
     marca:         p.marca||'',
     unidad:        p.unidad||'',
     familia:       p.familia||'',
@@ -594,7 +595,7 @@ async function enviar(){
 
 async function modificar(){
   if(!prodActual){showToast('⚠️ Selecciona un producto');return;}
-  const idx=historial.findIndex(h=>h.codigo===prodActual.codigo);
+  const idx=historial.findIndex(h=>h.codProducto===prodActual.codProducto);
   if(idx<0){showToast('ℹ️ Sin registro previo');return;}
   editIdx=idx;
   document.getElementById('qinp').value=historial[idx].cantidad;
@@ -605,7 +606,7 @@ async function modificar(){
 
 function editEntry(idx){
   const e=historial[idx];
-  const p=PRODS.find(x=>x.codigo===e.codigo);
+  const p=prodsCache[e.codProducto];
   if(p) selProd(p);
   editIdx=idx;
   document.getElementById('qinp').value=e.cantidad;
