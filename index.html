@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Inventario Electrocaribe</title>
+<!-- Firebase compat (no módulos) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-auth-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-firestore-compat.min.js"></script>
+<!-- SheetJS para Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow-x:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;background:#1a1a2e;color:#fff}
+.app{display:flex;flex-direction:column;min-height:100vh;max-width:480px;margin:0 auto;background:#1a1a2e}
+
+/* LOGIN */
+.login-screen{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;padding:32px 24px;gap:16px}
+.login-logo{font-size:48px}
+.login-title{font-size:20px;font-weight:800;color:#fff;text-align:center}
+.login-sub{font-size:13px;color:#555;text-align:center}
+.login-card{background:#12122a;border:1px solid #2a2a4a;border-radius:16px;padding:24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
+.login-label{color:#888;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.login-inp{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:10px;padding:12px 14px;color:#fff;font-size:15px;width:100%;outline:none;transition:border .2s}
+.login-inp:focus{border-color:#f97316}
+.login-inp::placeholder{color:#333}
+.btn-login{background:#f97316;border:none;border-radius:10px;padding:14px;color:#fff;font-size:15px;font-weight:700;width:100%;cursor:pointer;margin-top:4px}
+.btn-login:active{opacity:.85}
+.login-err{color:#ef4444;font-size:12px;text-align:center;min-height:16px}
+
+/* HEADER */
+.header{background:#12122a;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));border-bottom:1px solid #2a2a4a;position:sticky;top:0;z-index:10}
+.header-top{display:flex;justify-content:space-between;align-items:center}
+.header-title{color:#fff;font-size:15px;font-weight:700}
+.btn-logout{background:none;border:1px solid #3a3a6e;border-radius:6px;color:#888;font-size:11px;padding:4px 10px;cursor:pointer}
+.header-user{color:#555;font-size:10px;margin-top:2px}
+.fb-badge{display:inline-flex;align-items:center;background:#0d2e1a;color:#22c55e;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-top:3px}
+
+/* SCROLL */
+.scroll-body{flex:1;overflow-y:auto;padding:12px 14px;padding-bottom:20px;display:flex;flex-direction:column;gap:10px}
+
+/* SESIÓN */
+.session-bar{background:#12122a;border:1px solid #2a2a4a;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.session-row{display:flex;align-items:center;justify-content:space-between}
+.session-label{color:#888;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.chrono{font-size:26px;font-weight:700;color:#f97316;letter-spacing:2px;font-variant-numeric:tabular-nums}
+.chrono.off{color:#333}
+.tanda-badge{background:#1e1e38;border:1px solid #3a3a6e;border-radius:6px;padding:3px 10px;color:#aaa;font-size:12px;font-weight:700}
+.tanda-badge.on{background:#0d2e1a;border-color:#22c55e;color:#22c55e}
+.session-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-ini{background:#22c55e;border:none;border-radius:10px;padding:12px;color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+.btn-ini:disabled{background:#1a3a2a;color:#2d5a3d;cursor:not-allowed}
+.btn-fin{background:#ef4444;border:none;border-radius:10px;padding:12px;color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+.btn-fin:disabled{background:#3a1a1a;color:#5a2d2d;cursor:not-allowed}
+.btn-ini:active:not(:disabled){opacity:.85}
+.btn-fin:active:not(:disabled){opacity:.85}
+.up-status{font-size:11px;color:#888;text-align:center;min-height:14px}
+.up-status.ok{color:#22c55e} .up-status.err{color:#ef4444} .up-status.loading{color:#f97316}
+
+/* MÉTRICAS */
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.metric{background:#12122a;border-radius:10px;border:1px solid #2a2a4a;padding:8px 4px;text-align:center}
+.metric-val{color:#f97316;font-size:18px;font-weight:700}
+.metric-lbl{color:#555;font-size:9px;text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
+
+/* BÚSQUEDA */
+.inp{background:#12122a;border:1px solid #2a2a4a;border-radius:10px;padding:11px 14px;color:#fff;font-size:15px;width:100%;outline:none;transition:border .2s}
+.inp:focus{border-color:#f97316}
+.inp::placeholder{color:#444}
+.btn-srch{background:#f97316;border:none;border-radius:10px;padding:13px;color:#fff;font-size:14px;font-weight:700;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-srch:active{opacity:.85}
+.srch-drop{background:#1e1e38;border-radius:10px;border:1px solid #2a2a4a;overflow:hidden}
+.srch-item{padding:10px 14px;border-bottom:1px solid #252540;cursor:pointer}
+.srch-item:last-child{border-bottom:none}
+.srch-item:active{background:#252545}
+.si-code{color:#f97316;font-size:10px;font-weight:700}
+.si-name{color:#ddd;font-size:13px;margin-top:2px}
+.si-fam{color:#555;font-size:10px;margin-top:1px}
+
+/* TABS */
+.tabs{display:flex;background:#12122a;border-radius:10px;overflow:hidden;border:1px solid #2a2a4a}
+.tab{flex:1;padding:10px 2px;font-size:10px;font-weight:600;color:#666;text-align:center;cursor:pointer;border-radius:8px;transition:all .2s}
+.tab.active{background:#f97316;color:#fff}
+
+/* CARD */
+.card{background:#1e1e38;border-radius:12px;border:1px solid #2a2a4a;overflow:hidden}
+.drow{display:flex;padding:10px 14px;border-bottom:1px solid #25253e}
+.drow:last-child{border-bottom:none}
+.dlbl{color:#777;font-size:11px;min-width:96px;padding-top:1px;flex-shrink:0}
+.dval{color:#fff;font-size:12px;font-weight:500;flex:1;word-break:break-word}
+.dval.hl{color:#f97316}
+.slbl{color:#888;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+
+/* BODEGAS */
+.bgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.bbtn{background:#12122a;border:1px solid #2a2a4a;border-radius:9px;padding:10px 4px;color:#888;font-size:12px;font-weight:600;text-align:center;cursor:pointer;transition:all .2s}
+.bbtn.sel{background:#f97316;border-color:#f97316;color:#fff}
+.bbtn:active{opacity:.8}
+
+/* QTY */
+.qty-row{display:flex;align-items:center;gap:8px}
+.qbtn{width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.qbtn.plus{background:#22c55e;color:#fff}
+.qbtn.minus{background:#f97316;color:#fff}
+.qbtn:active{opacity:.8;transform:scale(.93)}
+.qinp{flex:1;background:#12122a;border:1px solid #2a2a4a;border-radius:10px;padding:10px;color:#fff;font-size:18px;font-weight:700;text-align:center;outline:none;min-width:0}
+.qinp:focus{border-color:#f97316}
+
+/* ACTIONS */
+.arow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-env{background:#f97316;border:none;border-radius:10px;padding:14px;color:#fff;font-size:14px;font-weight:700;cursor:pointer}
+.btn-env:active{opacity:.85}
+.btn-mod{background:#1e1e38;border:1px solid #3a3a6e;border-radius:10px;padding:14px;color:#aaa;font-size:14px;font-weight:700;cursor:pointer}
+.btn-mod:active{opacity:.8}
+.btn-del{background:#1e1e38;border:1px solid #7f1d1d;border-radius:10px;padding:10px 14px;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;width:100%;margin-top:4px}
+
+/* HISTORIAL */
+.empty{text-align:center;padding:24px 16px;color:#444;font-size:13px}
+.empty-i{font-size:26px;margin-bottom:6px;opacity:.5}
+.hitem{padding:10px 14px;border-bottom:1px solid #25253e}
+.hitem:last-child{border-bottom:none}
+.htop{display:flex;justify-content:space-between;align-items:center}
+.hcode{color:#f97316;font-size:11px;font-weight:700}
+.htime{color:#444;font-size:10px}
+.hname{color:#bbb;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.hbot{display:flex;justify-content:space-between;align-items:center;margin-top:5px}
+.hbod{color:#777;font-size:10px;background:#252540;padding:2px 8px;border-radius:4px}
+.hright{display:flex;align-items:center;gap:8px}
+.hqty{color:#22c55e;font-size:15px;font-weight:700}
+.hedit{background:none;border:1px solid #f97316;color:#f97316;font-size:10px;padding:2px 7px;border-radius:4px;cursor:pointer}
+
+/* SERIE */
+.srow{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #25253e}
+.srow:last-child{border-bottom:none}
+.skey{color:#888;font-size:12px}
+.sval{color:#fff;font-size:12px;font-weight:600}
+
+/* TANDAS */
+.titem{padding:10px 14px;border-bottom:1px solid #25253e;display:flex;justify-content:space-between;align-items:flex-start}
+.titem:last-child{border-bottom:none}
+.tname{color:#f97316;font-size:12px;font-weight:700}
+.tmeta{color:#666;font-size:10px;margin-top:2px}
+.tdur{color:#22c55e;font-size:13px;font-weight:700;text-align:right}
+.titems{color:#888;font-size:10px;margin-top:2px;text-align:right}
+.btn-dl{background:none;border:1px solid #3a3a6e;color:#aaa;font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;margin-top:5px;display:block}
+
+.umbadge{background:#0d2e1a;color:#22c55e;font-size:11px;font-weight:700;padding:2px 10px;border-radius:4px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#22c55e;color:#fff;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.overlay{position:fixed;inset:0;background:#1a1a2e;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:100}
+.overlay.off{display:none}
+.spin{width:32px;height:32px;border:3px solid #2a2a4a;border-top-color:#f97316;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay">
+  <div class="spin"></div>
+  <div style="color:#666;font-size:13px">Iniciando...</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" class="login-screen" style="display:none">
+  <div class="login-logo">📦</div>
+  <div class="login-title">Inventario Electrocaribe</div>
+  <div class="login-sub">Sigma ERP · Acceso seguro</div>
+  <div class="login-card">
+    <div>
+      <div class="login-label">Correo</div>
+      <input class="login-inp" id="lemail" type="email" placeholder="usuario@electrocaribe.com"/>
+    </div>
+    <div>
+      <div class="login-label">Contraseña</div>
+      <input class="login-inp" id="lpass" type="password" placeholder="••••••••"/>
+    </div>
+    <div class="login-err" id="lerr"></div>
+    <button class="btn-login" onclick="doLogin()">INGRESAR</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="main-app" style="display:none">
+  <div class="header">
+    <div class="header-top">
+      <div class="header-title">📦 Inventario Sigma ERP</div>
+      <button class="btn-logout" onclick="doLogout()">Salir</button>
+    </div>
+    <div class="header-user" id="huser"></div>
+    <div><span class="fb-badge" id="fbbadge">⏳ Conectando...</span></div>
+  </div>
+
+  <div class="scroll-body">
+
+    <div class="session-bar">
+      <div class="session-row">
+        <div>
+          <div class="session-label">Tanda activa</div>
+          <div class="tanda-badge" id="tbadge">Sin iniciar</div>
+        </div>
+        <div style="text-align:right">
+          <div class="session-label">Duración</div>
+          <div class="chrono off" id="chrono">00:00:00</div>
+        </div>
+      </div>
+      <div class="session-btns">
+        <button class="btn-ini" id="btnIni" onclick="iniciarConteo()">▶ INICIAR CONTEO</button>
+        <button class="btn-fin" id="btnFin" onclick="finalizarConteo()" disabled>⏹ FINALIZAR</button>
+      </div>
+      <div class="up-status" id="upStatus"></div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="metric-val" id="mC">0</div><div class="metric-lbl">Conteos</div></div>
+      <div class="metric"><div class="metric-val" id="mP">0</div><div class="metric-lbl">Productos</div></div>
+      <div class="metric"><div class="metric-val" id="mU">0</div><div class="metric-lbl">Unidades</div></div>
+    </div>
+
+    <div>
+      <div class="slbl">Buscar por código o nombre</div>
+      <input class="inp" id="srch" placeholder="Ej: 1101001501 o BREAKER..." autocomplete="off" autocorrect="off" spellcheck="false"/>
+    </div>
+    <div id="srch-box" style="display:none"></div>
+    <button class="btn-srch" onclick="buscar()">🔍 BUSCAR</button>
+
+    <div class="tabs">
+      <div class="tab active" id="tab-desc" onclick="setTab('desc')">Ficha</div>
+      <div class="tab" id="tab-hist" onclick="setTab('hist')">Historial</div>
+      <div class="tab" id="tab-serie" onclick="setTab('serie')">Serie</div>
+      <div class="tab" id="tab-tandas" onclick="setTab('tandas')">Tandas</div>
+    </div>
+
+    <div id="panel-desc" style="display:flex;flex-direction:column;gap:10px">
+      <div class="card" id="ficha">
+        <div class="empty"><div class="empty-i">🔌</div><div>Busca un producto para ver su ficha</div></div>
+      </div>
+      <div id="sec-bodega" style="display:none">
+        <div class="slbl">Seleccionar bodega</div>
+        <div class="bgrid">
+          <div class="bbtn" id="b1" onclick="selBodega('Bodega Principal','b1')">Bodega Principal</div>
+          <div class="bbtn" id="b2" onclick="selBodega('Bodega Atras','b2')">Bodega Atrás</div>
+          <div class="bbtn" id="b3" onclick="selBodega('Bodega Frente','b3')">Bodega Frente</div>
+          <div class="bbtn" id="b4" onclick="selBodega('Punto de Venta','b4')">Punto de Venta</div>
+        </div>
+      </div>
+      <div id="sec-qty" style="display:none">
+        <div class="slbl">Cantidad</div>
+        <div class="qty-row">
+          <button class="qbtn minus" onclick="chgQty(-1)">−</button>
+          <input class="qinp" type="number" id="qinp" value="0" min="0" inputmode="numeric"/>
+          <button class="qbtn plus" onclick="chgQty(1)">+</button>
+        </div>
+      </div>
+      <div id="sec-actions" style="display:none" class="arow">
+        <button class="btn-env" onclick="enviar()">ENVIAR</button>
+        <button class="btn-mod" onclick="modificar()">MODIFICAR</button>
+      </div>
+    </div>
+
+    <div id="panel-hist" style="display:none;flex-direction:column;gap:10px">
+      <div class="card" id="hist-list"><div class="empty"><div class="empty-i">📋</div><div>Sin registros aún</div></div></div>
+      <button class="btn-del" onclick="confirmarReset()">🗑️ BORRAR HISTORIAL DE TANDA ACTUAL</button>
+    </div>
+
+    <div id="panel-serie" style="display:none;flex-direction:column;gap:10px">
+      <div class="card" id="serie-list"><div class="empty"><div class="empty-i">📊</div><div>Sin conteos</div></div></div>
+    </div>
+
+    <div id="panel-tandas" style="display:none;flex-direction:column;gap:10px">
+      <div class="card" id="tandas-list"><div class="empty"><div class="empty-i">📁</div><div>No hay tandas finalizadas</div></div></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── FIREBASE CONFIG ───────────────────────────────────────
+const fbConfig = {
+  apiKey: "AIzaSyB-UJDH3Z7OQLpakhskVWewGPuh7pnsskg",
+  authDomain: "inventario-electrocaribe.firebaseapp.com",
+  projectId: "inventario-electrocaribe",
+  storageBucket: "inventario-electrocaribe.firebasestorage.app",
+  messagingSenderId: "703396323373",
+  appId: "1:703396323373:web:e96989896ce790fae018a4"
+};
+firebase.initializeApp(fbConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ── ESTADO ────────────────────────────────────────────────
+let historial=[], tandas=[], sesion=null;
+let prodActual=null, bodegaActual='', editIdx=null;
+let cronTimer=null, cronSeg=0;
+let resetClicks=0, resetTimer=null;
+let currentUser=null;
+
+// ── PRODUCTOS ─────────────────────────────────────────────
+const PRODS=[
+  {codigo:"4203008921",nombre:"REPARACIONES ESTABILIZADORES",familia:"04 - Proteccion Electrica",grupo:"042 - Proteccion Tension",subgrupo:"04203 - Estabilizadores",marca:"Magom",um:"SVC"},
+  {codigo:"1101001501",nombre:"BREAKER MONO ENCH 15A",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01101 - Monopolar",marca:"Siemens",um:"UND"},
+  {codigo:"1101002001",nombre:"BREAKER MONO ENCH 20A",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01101 - Monopolar",marca:"Siemens",um:"UND"},
+  {codigo:"1101003001",nombre:"BREAKER MONO ENCH 30A",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01101 - Monopolar",marca:"ABB",um:"UND"},
+  {codigo:"1102001501",nombre:"BREAKER BI ENCH 15A",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01102 - Bipolar",marca:"Schneider",um:"UND"},
+  {codigo:"1103002001",nombre:"BREAKER TRI ENCH 20A",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01103 - Tripolar",marca:"ABB",um:"UND"},
+  {codigo:"2201001401",nombre:"CABLE THHN #14 NEGRO",familia:"02 - Conductores",grupo:"021 - Cables",subgrupo:"02201 - THHN",marca:"Condumex",um:"MTS"},
+  {codigo:"2201001201",nombre:"CABLE THHN #12 BLANCO",familia:"02 - Conductores",grupo:"021 - Cables",subgrupo:"02201 - THHN",marca:"Condumex",um:"MTS"},
+  {codigo:"2201001001",nombre:"CABLE THHN #10 VERDE",familia:"02 - Conductores",grupo:"021 - Cables",subgrupo:"02201 - THHN",marca:"Condumex",um:"MTS"},
+  {codigo:"2202001401",nombre:"CABLE THWN #14 NEGRO",familia:"02 - Conductores",grupo:"021 - Cables",subgrupo:"02202 - THWN",marca:"General Cable",um:"MTS"},
+  {codigo:"3301004001",nombre:"TABLERO MONOF 4 CTO S/P",familia:"03 - Tableros",grupo:"031 - Residencial",subgrupo:"03301 - Monofasico",marca:"Square D",um:"UND"},
+  {codigo:"3301008001",nombre:"TABLERO MONOF 8 CTO C/P",familia:"03 - Tableros",grupo:"031 - Residencial",subgrupo:"03301 - Monofasico",marca:"Square D",um:"UND"},
+  {codigo:"3302012001",nombre:"TABLERO TRIF 12 CTO C/P",familia:"03 - Tableros",grupo:"032 - Industrial",subgrupo:"03302 - Trifasico",marca:"Eaton",um:"UND"},
+  {codigo:"5501001001",nombre:"BOMBILLO LED GU10 7W 3000K",familia:"05 - Iluminacion",grupo:"055 - Bombillos",subgrupo:"05501 - LED",marca:"Sylvania",um:"UND"},
+  {codigo:"5501002001",nombre:"BOMBILLO LED E27 9W 6500K",familia:"05 - Iluminacion",grupo:"055 - Bombillos",subgrupo:"05501 - LED",marca:"Osram",um:"UND"},
+  {codigo:"5502001801",nombre:"PANEL LED EMP REDO 18W 6500K",familia:"05 - Iluminacion",grupo:"056 - Paneles",subgrupo:"05502 - Empotrado",marca:"Ledvance",um:"UND"},
+  {codigo:"5502002401",nombre:"PANEL LED EMP CUAD 24W 4000K",familia:"05 - Iluminacion",grupo:"056 - Paneles",subgrupo:"05502 - Empotrado",marca:"Sylvania",um:"UND"},
+  {codigo:"5503005001",nombre:"CINTA LED 5MTS BLANCO FRIO",familia:"05 - Iluminacion",grupo:"057 - Cintas",subgrupo:"05503 - Flexible",marca:"Generic",um:"RLL"},
+  {codigo:"6601001001",nombre:"INTERRUPTOR BALANCIN EMP BLANC",familia:"06 - Mecanismos",grupo:"061 - Interruptores",subgrupo:"06601 - Balancin",marca:"Legrand",um:"UND"},
+  {codigo:"6602001001",nombre:"TOMA DOBLE EMP 15A BLANC",familia:"06 - Mecanismos",grupo:"062 - Tomas",subgrupo:"06602 - Doble",marca:"Legrand",um:"UND"},
+  {codigo:"6602002001",nombre:"TOMA AEREO 10A CAUCHO C009",familia:"06 - Mecanismos",grupo:"062 - Tomas",subgrupo:"06602 - Aerea",marca:"Generic",um:"UND"},
+  {codigo:"7701001001",nombre:"MULTIMETRO DIG DT-832",familia:"07 - Herramientas",grupo:"071 - Medicion",subgrupo:"07701 - Digital",marca:"UNI-T",um:"UND"},
+  {codigo:"7701002001",nombre:"MULTIMETRO ANAL M-1",familia:"07 - Herramientas",grupo:"071 - Medicion",subgrupo:"07702 - Analogico",marca:"Generic",um:"UND"},
+  {codigo:"7702001001",nombre:"CAUTIN BAQ GSR-30W",familia:"07 - Herramientas",grupo:"072 - Soldadura",subgrupo:"07702 - Cautin",marca:"Hakko",um:"UND"},
+  {codigo:"8801001001",nombre:"FUSIBLE VIDRIO CORTO 30A",familia:"08 - Fusibles",grupo:"081 - Vidrio",subgrupo:"08801 - Corto",marca:"Bussmann",um:"UND"},
+  {codigo:"8801002001",nombre:"FUSIBLE VIDRIO LARGO 15A 250V",familia:"08 - Fusibles",grupo:"081 - Vidrio",subgrupo:"08801 - Largo",marca:"Bussmann",um:"UND"},
+  {codigo:"9901001001",nombre:"TERMINAL BIMET #4 120A",familia:"09 - Accesorios",grupo:"091 - Terminales",subgrupo:"09901 - Bimetalico",marca:"Burndy",um:"UND"},
+  {codigo:"9901002001",nombre:"TERMINAL BIMET #2 200A",familia:"09 - Accesorios",grupo:"091 - Terminales",subgrupo:"09901 - Bimetalico",marca:"Burndy",um:"UND"},
+  {codigo:"9902001001",nombre:"PLUG 8P RJ-45 CAT6",familia:"09 - Accesorios",grupo:"092 - Conectores",subgrupo:"09902 - RJ45",marca:"AMP",um:"UND"},
+  {codigo:"9903001001",nombre:"ABRAZADERA GALV 3/8\"",familia:"09 - Accesorios",grupo:"093 - Abrazaderas",subgrupo:"09903 - Galvanizada",marca:"Generic",um:"UND"},
+  {codigo:"4201001001",nombre:"BALASTO ELEC 1X18W 2P",familia:"04 - Proteccion Electrica",grupo:"041 - Balastos",subgrupo:"04201 - Electronico",marca:"Philips",um:"UND"},
+  {codigo:"4202001001",nombre:"DRIVER PANEL 3W",familia:"04 - Proteccion Electrica",grupo:"042 - Drivers",subgrupo:"04202 - Panel",marca:"Generic",um:"UND"},
+  {codigo:"1104001001",nombre:"BREAKER DIF MONO 30A 30MA",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01104 - Diferencial",marca:"Schneider",um:"UND"},
+  {codigo:"6603001001",nombre:"MULTITOMA 5SAL REG-5 1.5MTS",familia:"06 - Mecanismos",grupo:"063 - Multitomas",subgrupo:"06603 - Multiple",marca:"Generic",um:"UND"},
+  {codigo:"5504001001",nombre:"REFLECTOR LED 10W 6500K EMP",familia:"05 - Iluminacion",grupo:"058 - Reflectores",subgrupo:"05504 - LED",marca:"Sylvania",um:"UND"},
+  {codigo:"7703001001",nombre:"DESTORNILLADOR ESTRELLA 1/4\"",familia:"07 - Herramientas",grupo:"073 - Manuales",subgrupo:"07703 - Destornillador",marca:"Stanley",um:"UND"},
+  {codigo:"7703002001",nombre:"DESTORNILLADOR PLANO 3/16\"",familia:"07 - Herramientas",grupo:"073 - Manuales",subgrupo:"07703 - Destornillador",marca:"Stanley",um:"UND"},
+  {codigo:"2203001401",nombre:"ALAMBRE DESNUDO #14",familia:"02 - Conductores",grupo:"022 - Alambre",subgrupo:"02203 - Desnudo",marca:"Generic",um:"MTS"},
+  {codigo:"1201001001",nombre:"CONTACTOR 220V 25A CJX2-25",familia:"01 - Proteccion Corriente",grupo:"012 - Contactores",subgrupo:"01201 - AC",marca:"Chint",um:"UND"},
+  {codigo:"1301001001",nombre:"GUARDAMOTOR 1-4A GV2-M06",familia:"01 - Proteccion Corriente",grupo:"013 - Guardamotores",subgrupo:"01301 - Magnetotermico",marca:"Schneider",um:"UND"},
+];
+
+// ── AUTH ──────────────────────────────────────────────────
+function doLogin(){
+  const email=document.getElementById('lemail').value.trim();
+  const pass=document.getElementById('lpass').value;
+  document.getElementById('lerr').textContent='';
+  auth.signInWithEmailAndPassword(email,pass).catch(e=>{
+    document.getElementById('lerr').textContent=
+      e.code==='auth/invalid-credential'?'Correo o contraseña incorrectos':'Error al iniciar sesión';
+  });
+}
+function doLogout(){ detenerCron(); auth.signOut(); }
+document.getElementById('lpass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    currentUser=user;
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('main-app').style.display='flex';
+    document.getElementById('huser').textContent=user.email;
+    await cargarDatos();
+  } else {
+    currentUser=null;
+    document.getElementById('overlay').classList.add('off');
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('main-app').style.display='none';
+  }
+});
+
+// ── FIRESTORE ─────────────────────────────────────────────
+async function cargarDatos(){
+  try {
+    const [sesSnap, hSnap, tSnap] = await Promise.all([
+      db.doc('sesiones/activa').get(),
+      db.doc('sesiones/historial').get(),
+      db.collection('tandas').orderBy('fin','desc').get()
+    ]);
+    if(sesSnap.exists && sesSnap.data().nombre){
+      sesion=sesSnap.data();
+      cronSeg=Math.floor((Date.now()-new Date(sesion.inicio).getTime())/1000);
+      iniciarCron(); renderSesionUI();
+    }
+    if(hSnap.exists) historial=hSnap.data().items||[];
+    tandas=tSnap.docs.map(d=>d.data());
+    document.getElementById('fbbadge').textContent='🔥 Firebase conectado';
+  } catch(e){
+    document.getElementById('fbbadge').textContent='⚠️ Error Firebase';
+  }
+  actualizarMetricas(); renderHistorial(); renderSerie(); renderTandas();
+  document.getElementById('overlay').classList.add('off');
+}
+
+async function guardarHistorial(){ await db.doc('sesiones/historial').set({items:historial}); }
+async function guardarSesion(){ await db.doc('sesiones/activa').set(sesion||{}); }
+
+// ── CRONÓMETRO ────────────────────────────────────────────
+function iniciarCron(){
+  if(cronTimer) clearInterval(cronTimer);
+  document.getElementById('chrono').classList.remove('off');
+  cronTimer=setInterval(()=>{
+    cronSeg++;
+    const h=String(Math.floor(cronSeg/3600)).padStart(2,'0');
+    const m=String(Math.floor((cronSeg%3600)/60)).padStart(2,'0');
+    const s=String(cronSeg%60).padStart(2,'0');
+    document.getElementById('chrono').textContent=`${h}:${m}:${s}`;
+  },1000);
+}
+function detenerCron(){
+  if(cronTimer){clearInterval(cronTimer);cronTimer=null;}
+  document.getElementById('chrono').classList.add('off');
+}
+function fmtDur(seg){
+  return `${String(Math.floor(seg/3600)).padStart(2,'0')}:${String(Math.floor((seg%3600)/60)).padStart(2,'0')}:${String(seg%60).padStart(2,'0')}`;
+}
+
+// ── SESIÓN ────────────────────────────────────────────────
+function renderSesionUI(){
+  const on=!!(sesion&&sesion.nombre);
+  document.getElementById('btnIni').disabled=on;
+  document.getElementById('btnFin').disabled=!on;
+  const b=document.getElementById('tbadge');
+  if(on){b.textContent=sesion.nombre;b.classList.add('on');}
+  else{b.textContent='Sin iniciar';b.classList.remove('on');document.getElementById('chrono').textContent='00:00:00';}
+}
+
+async function iniciarConteo(){
+  const num=tandas.length+1;
+  sesion={numero:num,nombre:`nota-inventario-${num}`,inicio:new Date().toISOString(),creadoPor:currentUser.email};
+  historial=[]; cronSeg=0;
+  iniciarCron(); renderSesionUI();
+  await guardarSesion(); await guardarHistorial();
+  actualizarMetricas(); renderHistorial(); renderSerie();
+  showToast(`▶ Tanda ${num} iniciada`);
+}
+
+async function finalizarConteo(){
+  if(!sesion||!sesion.nombre){showToast('⚠️ Sin tanda activa');return;}
+  if(!historial.length){showToast('⚠️ Sin registros en esta tanda');return;}
+  detenerCron();
+  const tanda={numero:sesion.numero,nombre:sesion.nombre,inicio:sesion.inicio,
+    fin:new Date().toISOString(),duracion:fmtDur(cronSeg),duracionSeg:cronSeg,
+    creadoPor:currentUser.email,items:[...historial]};
+  const st=document.getElementById('upStatus');
+  st.className='up-status loading'; st.textContent='💾 Guardando en Firebase...';
+  try {
+    await db.collection('tandas').add(tanda);
+    tandas.unshift(tanda);
+    sesion=null; await guardarSesion();
+    historial=[]; await guardarHistorial();
+    renderSesionUI(); renderTandas(); actualizarMetricas(); renderHistorial(); renderSerie();
+    st.className='up-status ok'; st.textContent=`✅ ${tanda.nombre} guardada`;
+    showToast(`✅ Tanda ${tanda.numero} finalizada`);
+  } catch(e){
+    st.className='up-status err'; st.textContent=`⚠️ Error: ${e.message}`;
+  }
+}
+
+// ── EXCEL ─────────────────────────────────────────────────
+function descargarExcel(idx){
+  const t=tandas[idx];
+  const wb=XLSX.utils.book_new();
+  const data=[
+    ['INVENTARIO ELECTROCARIBE - SIGMA ERP'],
+    ['Tanda:',t.nombre],['Inicio:',new Date(t.inicio).toLocaleString('es-CO')],
+    ['Fin:',new Date(t.fin).toLocaleString('es-CO')],['Duración:',t.duracion],
+    ['Registrado por:',t.creadoPor],[],
+    ['#','Código','Nombre','Familia','Marca','U/M','Bodega','Cantidad','Fecha/Hora'],
+    ...t.items.map((h,i)=>[i+1,h.codigo,h.nombre,h.familia,h.marca||'',h.um||'',h.bodega,h.cantidad,new Date(h.ts).toLocaleString('es-CO')])
+  ];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),t.nombre.substring(0,31));
+  XLSX.writeFile(wb,`${t.nombre}.xlsx`);
+}
+
+// ── BÚSQUEDA ──────────────────────────────────────────────
+function buscar(){
+  const q=document.getElementById('srch').value.trim().toLowerCase();
+  if(q.length<2){document.getElementById('srch-box').style.display='none';return;}
+  const res=PRODS.filter(p=>p.codigo.toLowerCase().includes(q)||p.nombre.toLowerCase().includes(q)).slice(0,8);
+  mostrarRes(res);
+  if(res.length===1) selProd(res[0]);
+}
+document.getElementById('srch').addEventListener('input',function(){
+  const q=this.value.trim().toLowerCase();
+  if(q.length<2){document.getElementById('srch-box').style.display='none';return;}
+  mostrarRes(PRODS.filter(p=>p.codigo.toLowerCase().includes(q)||p.nombre.toLowerCase().includes(q)).slice(0,6));
+});
+function mostrarRes(res){
+  const box=document.getElementById('srch-box');
+  if(!res.length){box.style.display='none';return;}
+  box.innerHTML='<div class="srch-drop">'+res.map(p=>`
+    <div class="srch-item" onclick="selProd(PRODS.find(x=>x.codigo==='${p.codigo}'))">
+      <div class="si-code">${p.codigo}</div><div class="si-name">${p.nombre}</div><div class="si-fam">${p.familia}</div>
+    </div>`).join('')+'</div>';
+  box.style.display='block';
+}
+function selProd(p){
+  if(!p)return;
+  prodActual=p; editIdx=null;
+  document.getElementById('srch').value=p.codigo+' — '+p.nombre;
+  document.getElementById('srch-box').style.display='none';
+  renderFicha();
+  document.getElementById('sec-bodega').style.display='block';
+  document.getElementById('sec-qty').style.display='block';
+  document.getElementById('sec-actions').style.display='grid';
+  document.getElementById('qinp').value=0;
+  limpiarBodega(); setTab('desc');
+}
+function renderFicha(){
+  const p=prodActual;
+  document.getElementById('ficha').innerHTML=`
+    <div class="drow"><span class="dlbl">Código</span><span class="dval hl">${p.codigo}</span></div>
+    <div class="drow"><span class="dlbl">Nombre</span><span class="dval">${p.nombre}</span></div>
+    <div class="drow"><span class="dlbl">Familia</span><span class="dval">${p.familia}</span></div>
+    <div class="drow"><span class="dlbl">Grupo</span><span class="dval">${p.grupo}</span></div>
+    <div class="drow"><span class="dlbl">Subgrupo</span><span class="dval">${p.subgrupo}</span></div>
+    <div class="drow"><span class="dlbl">Marca</span><span class="dval">${p.marca}</span></div>
+    <div class="drow"><span class="dlbl">Unidad Med.</span><span class="dval"><span class="umbadge">${p.um}</span></span></div>`;
+}
+
+function selBodega(nombre,id){
+  bodegaActual=nombre;
+  ['b1','b2','b3','b4'].forEach(b=>document.getElementById(b).classList.remove('sel'));
+  document.getElementById(id).classList.add('sel');
+}
+function limpiarBodega(){
+  bodegaActual='';
+  ['b1','b2','b3','b4'].forEach(b=>document.getElementById(b).classList.remove('sel'));
+}
+function chgQty(d){
+  const i=document.getElementById('qinp');
+  i.value=Math.max(0,(parseInt(i.value)||0)+d);
+}
+
+// ── ENVIAR ────────────────────────────────────────────────
+async function enviar(){
+  if(!sesion||!sesion.nombre){showToast('⚠️ Inicia un conteo primero');return;}
+  if(!prodActual){showToast('⚠️ Selecciona un producto');return;}
+  if(!bodegaActual){showToast('⚠️ Selecciona una bodega');return;}
+  const qty=parseInt(document.getElementById('qinp').value)||0;
+  if(qty<1){showToast('⚠️ Ingresa cantidad mayor a 0');return;}
+  const entry={id:Date.now(),codigo:prodActual.codigo,nombre:prodActual.nombre,
+    familia:prodActual.familia,marca:prodActual.marca,um:prodActual.um,
+    bodega:bodegaActual,cantidad:qty,ts:new Date().toISOString(),usuario:currentUser.email};
+  if(editIdx!==null){historial[editIdx]=entry;editIdx=null;showToast('✏️ Modificado');}
+  else{historial.unshift(entry);showToast('✅ Enviado');}
+  await guardarHistorial();
+  actualizarMetricas(); renderHistorial(); renderSerie();
+  document.getElementById('qinp').value=0; limpiarBodega();
+}
+
+async function modificar(){
+  if(!prodActual){showToast('⚠️ Selecciona un producto');return;}
+  const idx=historial.findIndex(h=>h.codigo===prodActual.codigo);
+  if(idx<0){showToast('ℹ️ Sin registro previo');return;}
+  editIdx=idx;
+  document.getElementById('qinp').value=historial[idx].cantidad;
+  const bm={'Bodega Principal':'b1','Bodega Atras':'b2','Bodega Frente':'b3','Punto de Venta':'b4'};
+  if(bm[historial[idx].bodega]) selBodega(historial[idx].bodega,bm[historial[idx].bodega]);
+  showToast('✏️ Modo edición');
+}
+
+function editEntry(idx){
+  const e=historial[idx];
+  const p=PRODS.find(x=>x.codigo===e.codigo);
+  if(p) selProd(p);
+  editIdx=idx;
+  document.getElementById('qinp').value=e.cantidad;
+  const bm={'Bodega Principal':'b1','Bodega Atras':'b2','Bodega Frente':'b3','Punto de Venta':'b4'};
+  if(bm[e.bodega]) selBodega(e.bodega,bm[e.bodega]);
+  setTab('desc');
+}
+
+function confirmarReset(){
+  if(!historial.length){showToast('ℹ️ Historial vacío');return;}
+  resetClicks++;
+  if(resetClicks===1){
+    showToast('⚠️ Toca de nuevo para confirmar');
+    resetTimer=setTimeout(()=>{resetClicks=0;},3000);
+  } else {
+    clearTimeout(resetTimer); resetClicks=0; borrarHistorial();
+  }
+}
+async function borrarHistorial(){
+  historial=[];
+  await guardarHistorial();
+  actualizarMetricas(); renderHistorial(); renderSerie();
+  showToast('🗑️ Historial borrado');
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function actualizarMetricas(){
+  document.getElementById('mC').textContent=historial.length;
+  document.getElementById('mP').textContent=new Set(historial.map(h=>h.codigo)).size;
+  document.getElementById('mU').textContent=historial.reduce((a,h)=>a+h.cantidad,0);
+}
+function renderHistorial(){
+  const el=document.getElementById('hist-list');
+  if(!historial.length){el.innerHTML='<div class="empty"><div class="empty-i">📋</div><div>Sin registros aún</div></div>';return;}
+  el.innerHTML=historial.map((h,i)=>{
+    const t=new Date(h.ts),dd=String(t.getDate()).padStart(2,'0'),mo=String(t.getMonth()+1).padStart(2,'0'),
+      hh=String(t.getHours()).padStart(2,'0'),mm=String(t.getMinutes()).padStart(2,'0');
+    return`<div class="hitem">
+      <div class="htop"><span class="hcode">${h.codigo}</span><span class="htime">${dd}/${mo} ${hh}:${mm}</span></div>
+      <div class="hname">${h.nombre}</div>
+      <div class="hbot"><span class="hbod">${h.bodega}</span>
+        <span class="hright"><span class="hqty">+${h.cantidad}</span>
+        <button class="hedit" onclick="editEntry(${i})">Editar</button></span>
+      </div></div>`;
+  }).join('');
+}
+function renderSerie(){
+  const el=document.getElementById('serie-list');
+  if(!historial.length){el.innerHTML='<div class="empty"><div class="empty-i">📊</div><div>Sin conteos</div></div>';return;}
+  const bods=['Bodega Principal','Bodega Atras','Bodega Frente','Punto de Venta'];
+  const grand=historial.reduce((a,h)=>a+h.cantidad,0);
+  el.innerHTML=bods.map(b=>{
+    const t=historial.filter(h=>h.bodega===b).reduce((a,h)=>a+h.cantidad,0);
+    return`<div class="srow"><span class="skey">${b}</span><span class="sval">${t} uds</span></div>`;
+  }).join('')+`<div class="srow" style="background:#12122a"><span class="skey" style="color:#f97316;font-weight:700">TOTAL</span><span class="sval" style="color:#f97316">${grand} uds</span></div>`;
+}
+function renderTandas(){
+  const el=document.getElementById('tandas-list');
+  if(!tandas.length){el.innerHTML='<div class="empty"><div class="empty-i">📁</div><div>No hay tandas finalizadas</div></div>';return;}
+  el.innerHTML=tandas.map((t,i)=>{
+    const fi=new Date(t.fin),dd=String(fi.getDate()).padStart(2,'0'),mo=String(fi.getMonth()+1).padStart(2,'0'),
+      hh=String(fi.getHours()).padStart(2,'0'),mm=String(fi.getMinutes()).padStart(2,'0');
+    const total=t.items.reduce((a,h)=>a+h.cantidad,0);
+    return`<div class="titem">
+      <div>
+        <div class="tname">📄 ${t.nombre}</div>
+        <div class="tmeta">${dd}/${mo} ${hh}:${mm} · ${t.creadoPor}</div>
+        <button class="btn-dl" onclick="descargarExcel(${i})">⬇ Descargar Excel</button>
+      </div>
+      <div>
+        <div class="tdur">⏱ ${t.duracion}</div>
+        <div class="titems">${t.items.length} reg · ${total} uds</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function setTab(t){
+  ['desc','hist','serie','tandas'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('active',x===t);
+    const p=document.getElementById('panel-'+x);
+    p.style.display=x===t?'flex':'none';
+    if(x===t){p.style.flexDirection='column';p.style.gap='10px';}
+  });
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2300);
+}
+</script>
+</body>
+</html>
