@@ -298,49 +298,23 @@ let cronTimer=null, cronSeg=0;
 let resetClicks=0, resetTimer=null;
 let currentUser=null;
 
-// ── PRODUCTOS ─────────────────────────────────────────────
-const PRODS=[
-  {codigo:"4203008921",nombre:"REPARACIONES ESTABILIZADORES",familia:"04 - Proteccion Electrica",grupo:"042 - Proteccion Tension",subgrupo:"04203 - Estabilizadores",marca:"Magom",um:"SVC"},
-  {codigo:"1101001501",nombre:"BREAKER MONO ENCH 15A",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01101 - Monopolar",marca:"Siemens",um:"UND"},
-  {codigo:"1101002001",nombre:"BREAKER MONO ENCH 20A",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01101 - Monopolar",marca:"Siemens",um:"UND"},
-  {codigo:"1101003001",nombre:"BREAKER MONO ENCH 30A",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01101 - Monopolar",marca:"ABB",um:"UND"},
-  {codigo:"1102001501",nombre:"BREAKER BI ENCH 15A",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01102 - Bipolar",marca:"Schneider",um:"UND"},
-  {codigo:"1103002001",nombre:"BREAKER TRI ENCH 20A",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01103 - Tripolar",marca:"ABB",um:"UND"},
-  {codigo:"2201001401",nombre:"CABLE THHN #14 NEGRO",familia:"02 - Conductores",grupo:"021 - Cables",subgrupo:"02201 - THHN",marca:"Condumex",um:"MTS"},
-  {codigo:"2201001201",nombre:"CABLE THHN #12 BLANCO",familia:"02 - Conductores",grupo:"021 - Cables",subgrupo:"02201 - THHN",marca:"Condumex",um:"MTS"},
-  {codigo:"2201001001",nombre:"CABLE THHN #10 VERDE",familia:"02 - Conductores",grupo:"021 - Cables",subgrupo:"02201 - THHN",marca:"Condumex",um:"MTS"},
-  {codigo:"2202001401",nombre:"CABLE THWN #14 NEGRO",familia:"02 - Conductores",grupo:"021 - Cables",subgrupo:"02202 - THWN",marca:"General Cable",um:"MTS"},
-  {codigo:"3301004001",nombre:"TABLERO MONOF 4 CTO S/P",familia:"03 - Tableros",grupo:"031 - Residencial",subgrupo:"03301 - Monofasico",marca:"Square D",um:"UND"},
-  {codigo:"3301008001",nombre:"TABLERO MONOF 8 CTO C/P",familia:"03 - Tableros",grupo:"031 - Residencial",subgrupo:"03301 - Monofasico",marca:"Square D",um:"UND"},
-  {codigo:"3302012001",nombre:"TABLERO TRIF 12 CTO C/P",familia:"03 - Tableros",grupo:"032 - Industrial",subgrupo:"03302 - Trifasico",marca:"Eaton",um:"UND"},
-  {codigo:"5501001001",nombre:"BOMBILLO LED GU10 7W 3000K",familia:"05 - Iluminacion",grupo:"055 - Bombillos",subgrupo:"05501 - LED",marca:"Sylvania",um:"UND"},
-  {codigo:"5501002001",nombre:"BOMBILLO LED E27 9W 6500K",familia:"05 - Iluminacion",grupo:"055 - Bombillos",subgrupo:"05501 - LED",marca:"Osram",um:"UND"},
-  {codigo:"5502001801",nombre:"PANEL LED EMP REDO 18W 6500K",familia:"05 - Iluminacion",grupo:"056 - Paneles",subgrupo:"05502 - Empotrado",marca:"Ledvance",um:"UND"},
-  {codigo:"5502002401",nombre:"PANEL LED EMP CUAD 24W 4000K",familia:"05 - Iluminacion",grupo:"056 - Paneles",subgrupo:"05502 - Empotrado",marca:"Sylvania",um:"UND"},
-  {codigo:"5503005001",nombre:"CINTA LED 5MTS BLANCO FRIO",familia:"05 - Iluminacion",grupo:"057 - Cintas",subgrupo:"05503 - Flexible",marca:"Generic",um:"RLL"},
-  {codigo:"6601001001",nombre:"INTERRUPTOR BALANCIN EMP BLANC",familia:"06 - Mecanismos",grupo:"061 - Interruptores",subgrupo:"06601 - Balancin",marca:"Legrand",um:"UND"},
-  {codigo:"6602001001",nombre:"TOMA DOBLE EMP 15A BLANC",familia:"06 - Mecanismos",grupo:"062 - Tomas",subgrupo:"06602 - Doble",marca:"Legrand",um:"UND"},
-  {codigo:"6602002001",nombre:"TOMA AEREO 10A CAUCHO C009",familia:"06 - Mecanismos",grupo:"062 - Tomas",subgrupo:"06602 - Aerea",marca:"Generic",um:"UND"},
-  {codigo:"7701001001",nombre:"MULTIMETRO DIG DT-832",familia:"07 - Herramientas",grupo:"071 - Medicion",subgrupo:"07701 - Digital",marca:"UNI-T",um:"UND"},
-  {codigo:"7701002001",nombre:"MULTIMETRO ANAL M-1",familia:"07 - Herramientas",grupo:"071 - Medicion",subgrupo:"07702 - Analogico",marca:"Generic",um:"UND"},
-  {codigo:"7702001001",nombre:"CAUTIN BAQ GSR-30W",familia:"07 - Herramientas",grupo:"072 - Soldadura",subgrupo:"07702 - Cautin",marca:"Hakko",um:"UND"},
-  {codigo:"8801001001",nombre:"FUSIBLE VIDRIO CORTO 30A",familia:"08 - Fusibles",grupo:"081 - Vidrio",subgrupo:"08801 - Corto",marca:"Bussmann",um:"UND"},
-  {codigo:"8801002001",nombre:"FUSIBLE VIDRIO LARGO 15A 250V",familia:"08 - Fusibles",grupo:"081 - Vidrio",subgrupo:"08801 - Largo",marca:"Bussmann",um:"UND"},
-  {codigo:"9901001001",nombre:"TERMINAL BIMET #4 120A",familia:"09 - Accesorios",grupo:"091 - Terminales",subgrupo:"09901 - Bimetalico",marca:"Burndy",um:"UND"},
-  {codigo:"9901002001",nombre:"TERMINAL BIMET #2 200A",familia:"09 - Accesorios",grupo:"091 - Terminales",subgrupo:"09901 - Bimetalico",marca:"Burndy",um:"UND"},
-  {codigo:"9902001001",nombre:"PLUG 8P RJ-45 CAT6",familia:"09 - Accesorios",grupo:"092 - Conectores",subgrupo:"09902 - RJ45",marca:"AMP",um:"UND"},
-  {codigo:"9903001001",nombre:"ABRAZADERA GALV 3/8\"",familia:"09 - Accesorios",grupo:"093 - Abrazaderas",subgrupo:"09903 - Galvanizada",marca:"Generic",um:"UND"},
-  {codigo:"4201001001",nombre:"BALASTO ELEC 1X18W 2P",familia:"04 - Proteccion Electrica",grupo:"041 - Balastos",subgrupo:"04201 - Electronico",marca:"Philips",um:"UND"},
-  {codigo:"4202001001",nombre:"DRIVER PANEL 3W",familia:"04 - Proteccion Electrica",grupo:"042 - Drivers",subgrupo:"04202 - Panel",marca:"Generic",um:"UND"},
-  {codigo:"1104001001",nombre:"BREAKER DIF MONO 30A 30MA",familia:"01 - Proteccion Corriente",grupo:"011 - Breakers",subgrupo:"01104 - Diferencial",marca:"Schneider",um:"UND"},
-  {codigo:"6603001001",nombre:"MULTITOMA 5SAL REG-5 1.5MTS",familia:"06 - Mecanismos",grupo:"063 - Multitomas",subgrupo:"06603 - Multiple",marca:"Generic",um:"UND"},
-  {codigo:"5504001001",nombre:"REFLECTOR LED 10W 6500K EMP",familia:"05 - Iluminacion",grupo:"058 - Reflectores",subgrupo:"05504 - LED",marca:"Sylvania",um:"UND"},
-  {codigo:"7703001001",nombre:"DESTORNILLADOR ESTRELLA 1/4\"",familia:"07 - Herramientas",grupo:"073 - Manuales",subgrupo:"07703 - Destornillador",marca:"Stanley",um:"UND"},
-  {codigo:"7703002001",nombre:"DESTORNILLADOR PLANO 3/16\"",familia:"07 - Herramientas",grupo:"073 - Manuales",subgrupo:"07703 - Destornillador",marca:"Stanley",um:"UND"},
-  {codigo:"2203001401",nombre:"ALAMBRE DESNUDO #14",familia:"02 - Conductores",grupo:"022 - Alambre",subgrupo:"02203 - Desnudo",marca:"Generic",um:"MTS"},
-  {codigo:"1201001001",nombre:"CONTACTOR 220V 25A CJX2-25",familia:"01 - Proteccion Corriente",grupo:"012 - Contactores",subgrupo:"01201 - AC",marca:"Chint",um:"UND"},
-  {codigo:"1301001001",nombre:"GUARDAMOTOR 1-4A GV2-M06",familia:"01 - Proteccion Corriente",grupo:"013 - Guardamotores",subgrupo:"01301 - Magnetotermico",marca:"Schneider",um:"UND"},
-];
+// ── PRODUCTOS (desde Firestore) ───────────────────────────
+let PRODS = [];
+let prodsCache = {}; // búsqueda rápida por código
+
+async function cargarProductos(){
+  try {
+    const snap = await db.collection('productos').get();
+    PRODS = snap.docs.map(d => d.data());
+    PRODS.forEach(p => prodsCache[p.codProducto] = p);
+    setStatus(`🔥 Firebase conectado · ${PRODS.length} productos cargados`);
+  } catch(e){
+    setStatus('⚠️ Error cargando productos');
+    console.error(e);
+  }
+}
+
+function setStatus(t){ document.getElementById('fbbadge').textContent=t; }
 
 // ── AUTH ──────────────────────────────────────────────────
 function doLogin(){
@@ -385,10 +359,10 @@ async function cargarDatos(){
     }
     if(hSnap.exists) historial=hSnap.data().items||[];
     tandas=tSnap.docs.map(d=>d.data());
-    document.getElementById('fbbadge').textContent='🔥 Firebase conectado';
   } catch(e){
-    document.getElementById('fbbadge').textContent='⚠️ Error Firebase';
+    setStatus('⚠️ Error Firebase');
   }
+  await cargarProductos();
   actualizarMetricas(); renderHistorial(); renderSerie(); renderTandas();
   document.getElementById('overlay').classList.add('off');
 }
@@ -465,11 +439,30 @@ function descargarExcel(idx){
   const wb=XLSX.utils.book_new();
   const data=[
     ['INVENTARIO ELECTROCARIBE - SIGMA ERP'],
-    ['Tanda:',t.nombre],['Inicio:',new Date(t.inicio).toLocaleString('es-CO')],
-    ['Fin:',new Date(t.fin).toLocaleString('es-CO')],['Duración:',t.duracion],
-    ['Registrado por:',t.creadoPor],[],
-    ['#','Código','Nombre','Familia','Marca','U/M','Bodega','Cantidad','Fecha/Hora'],
-    ...t.items.map((h,i)=>[i+1,h.codigo,h.nombre,h.familia,h.marca||'',h.um||'',h.bodega,h.cantidad,new Date(h.ts).toLocaleString('es-CO')])
+    ['Tanda:',t.nombre],
+    ['Inicio:',new Date(t.inicio).toLocaleString('es-CO')],
+    ['Fin:',new Date(t.fin).toLocaleString('es-CO')],
+    ['Duración:',t.duracion],
+    ['Registrado por:',t.creadoPor],
+    [],
+    // Columnas exactas del CSV original + campos de inventario
+    ['codProducto','codProducto_antiguo','n_producto','n_marca','unidad',
+     'Familia','Grupo','subgrupo_codigo','cod_bar','Bodega','Cantidad','Fecha/Hora','Usuario'],
+    ...t.items.map(h=>[
+      h.codProducto||h.codigo||'',
+      h.codAntiguo||'',
+      h.nombre||'',
+      h.marca||'',
+      h.unidad||h.um||'',
+      h.familia||'',
+      h.grupo||'',
+      h.subgrupo||'',
+      h.codBarra||'',
+      h.bodega||'',
+      h.cantidad||0,
+      new Date(h.ts).toLocaleString('es-CO'),
+      h.usuario||''
+    ])
   ];
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),t.nombre.substring(0,31));
   XLSX.writeFile(wb,`${t.nombre}.xlsx`);
@@ -479,28 +472,37 @@ function descargarExcel(idx){
 function buscar(){
   const q=document.getElementById('srch').value.trim().toLowerCase();
   if(q.length<2){document.getElementById('srch-box').style.display='none';return;}
-  const res=PRODS.filter(p=>p.codigo.toLowerCase().includes(q)||p.nombre.toLowerCase().includes(q)).slice(0,8);
+  const res=PRODS.filter(p=>
+    String(p.codProducto).toLowerCase().includes(q)||
+    String(p.nombre).toLowerCase().includes(q)||
+    String(p.codBarra||'').toLowerCase().includes(q)
+  ).slice(0,8);
   mostrarRes(res);
   if(res.length===1) selProd(res[0]);
 }
 document.getElementById('srch').addEventListener('input',function(){
   const q=this.value.trim().toLowerCase();
   if(q.length<2){document.getElementById('srch-box').style.display='none';return;}
-  mostrarRes(PRODS.filter(p=>p.codigo.toLowerCase().includes(q)||p.nombre.toLowerCase().includes(q)).slice(0,6));
+  mostrarRes(PRODS.filter(p=>
+    String(p.codProducto).toLowerCase().includes(q)||
+    String(p.nombre).toLowerCase().includes(q)
+  ).slice(0,6));
 });
 function mostrarRes(res){
   const box=document.getElementById('srch-box');
   if(!res.length){box.style.display='none';return;}
   box.innerHTML='<div class="srch-drop">'+res.map(p=>`
-    <div class="srch-item" onclick="selProd(PRODS.find(x=>x.codigo==='${p.codigo}'))">
-      <div class="si-code">${p.codigo}</div><div class="si-name">${p.nombre}</div><div class="si-fam">${p.familia}</div>
+    <div class="srch-item" onclick="selProd(prodsCache['${p.codProducto}'])">
+      <div class="si-code">${p.codProducto}</div>
+      <div class="si-name">${p.nombre}</div>
+      <div class="si-fam">${p.marca||''} · ${p.unidad||''}</div>
     </div>`).join('')+'</div>';
   box.style.display='block';
 }
 function selProd(p){
   if(!p)return;
   prodActual=p; editIdx=null;
-  document.getElementById('srch').value=p.codigo+' — '+p.nombre;
+  document.getElementById('srch').value=p.codProducto+' — '+p.nombre;
   document.getElementById('srch-box').style.display='none';
   renderFicha();
   document.getElementById('sec-bodega').style.display='block';
@@ -512,13 +514,15 @@ function selProd(p){
 function renderFicha(){
   const p=prodActual;
   document.getElementById('ficha').innerHTML=`
-    <div class="drow"><span class="dlbl">Código</span><span class="dval hl">${p.codigo}</span></div>
+    <div class="drow"><span class="dlbl">Código</span><span class="dval hl">${p.codProducto}</span></div>
+    <div class="drow"><span class="dlbl">Cód. Antiguo</span><span class="dval">${p.codAntiguo||'-'}</span></div>
     <div class="drow"><span class="dlbl">Nombre</span><span class="dval">${p.nombre}</span></div>
-    <div class="drow"><span class="dlbl">Familia</span><span class="dval">${p.familia}</span></div>
-    <div class="drow"><span class="dlbl">Grupo</span><span class="dval">${p.grupo}</span></div>
-    <div class="drow"><span class="dlbl">Subgrupo</span><span class="dval">${p.subgrupo}</span></div>
-    <div class="drow"><span class="dlbl">Marca</span><span class="dval">${p.marca}</span></div>
-    <div class="drow"><span class="dlbl">Unidad Med.</span><span class="dval"><span class="umbadge">${p.um}</span></span></div>`;
+    <div class="drow"><span class="dlbl">Marca</span><span class="dval">${p.marca||'-'}</span></div>
+    <div class="drow"><span class="dlbl">Unidad Med.</span><span class="dval"><span class="umbadge">${p.unidad||'-'}</span></span></div>
+    <div class="drow"><span class="dlbl">Familia</span><span class="dval">${p.familia||'-'}</span></div>
+    <div class="drow"><span class="dlbl">Grupo</span><span class="dval">${p.grupo||'-'}</span></div>
+    <div class="drow"><span class="dlbl">Subgrupo</span><span class="dval">${p.subgrupo||'-'}</span></div>
+    <div class="drow"><span class="dlbl">Cód. Barra</span><span class="dval">${p.codBarra||'-'}</span></div>`;
 }
 
 function selBodega(nombre,id){
@@ -542,9 +546,22 @@ async function enviar(){
   if(!bodegaActual){showToast('⚠️ Selecciona una bodega');return;}
   const qty=parseInt(document.getElementById('qinp').value)||0;
   if(qty<1){showToast('⚠️ Ingresa cantidad mayor a 0');return;}
-  const entry={id:Date.now(),codigo:prodActual.codigo,nombre:prodActual.nombre,
-    familia:prodActual.familia,marca:prodActual.marca,um:prodActual.um,
-    bodega:bodegaActual,cantidad:qty,ts:new Date().toISOString(),usuario:currentUser.email};
+  const entry={
+    id:Date.now(),
+    codProducto:   p.codProducto,
+    codAntiguo:    p.codAntiguo||'',
+    nombre:        p.nombre,
+    marca:         p.marca||'',
+    unidad:        p.unidad||'',
+    familia:       p.familia||'',
+    grupo:         p.grupo||'',
+    subgrupo:      p.subgrupo||'',
+    codBarra:      p.codBarra||'',
+    bodega:        bodegaActual,
+    cantidad:      qty,
+    ts:            new Date().toISOString(),
+    usuario:       currentUser.email
+  };
   if(editIdx!==null){historial[editIdx]=entry;editIdx=null;showToast('✏️ Modificado');}
   else{historial.unshift(entry);showToast('✅ Enviado');}
   await guardarHistorial();
