@@ -451,7 +451,8 @@ async function finalizarConteo(){
     sesion=null; await guardarSesion();
     historial=[]; await guardarHistorial();
     renderSesionUI(); renderTandas(); actualizarMetricas(); renderHistorial(); renderSerie();
-    st.className='up-status ok'; st.textContent=`✅ ${tanda.nombre} guardada`;
+    st.className='up-status ok'; st.textContent=`✅ ${tanda.nombre} guardada — descargando Excel...`;
+    setTimeout(()=>descargarExcel(0), 800);
     showToast(`✅ Tanda ${tanda.numero} finalizada`);
   } catch(e){
     st.className='up-status err'; st.textContent=`⚠️ Error: ${e.message}`;
@@ -656,4 +657,5 @@ function showToast(msg){
 }
 </script>
 </body>
+</html>
 </html>
