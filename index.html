@@ -298,23 +298,35 @@ let cronTimer=null, cronSeg=0;
 let resetClicks=0, resetTimer=null;
 let currentUser=null;
 
-// ── PRODUCTOS (desde Firestore) ───────────────────────────
+// ── PRODUCTOS (carga única en memoria) ───────────────────
 let PRODS = [];
-let prodsCache = {}; // búsqueda rápida por código
+let prodsCache = {};
+let searchTimer = null;
+
+function setStatus(t){ document.getElementById('fbbadge').textContent=t; }
 
 async function cargarProductos(){
+  setStatus('⏳ Cargando productos...');
   try {
     const snap = await db.collection('productos').get();
     PRODS = snap.docs.map(d => d.data());
     PRODS.forEach(p => prodsCache[p.codProducto] = p);
-    setStatus(`🔥 Firebase conectado · ${PRODS.length} productos cargados`);
+    setStatus(`🔥 Firebase · ${PRODS.length} productos`);
   } catch(e){
     setStatus('⚠️ Error cargando productos');
     console.error(e);
   }
 }
 
-function setStatus(t){ document.getElementById('fbbadge').textContent=t; }
+// Búsqueda inteligente: todos los términos deben aparecer en nombre o código
+function buscarLocal(q){
+  const terminos = q.trim().toUpperCase().split(/\s+/).filter(Boolean);
+  if(!terminos.length) return [];
+  return PRODS.filter(p => {
+    const haystack = `${p.codProducto} ${p.nombre} ${p.marca||''} ${p.codBarra||''}`.toUpperCase();
+    return terminos.every(t => haystack.includes(t));
+  }).slice(0, 10);
+}
 
 // ── AUTH ──────────────────────────────────────────────────
 function doLogin(){
@@ -470,24 +482,35 @@ function descargarExcel(idx){
 
 // ── BÚSQUEDA ──────────────────────────────────────────────
 function buscar(){
-  const q=document.getElementById('srch').value.trim().toLowerCase();
+  const q=document.getElementById('srch').value.trim();
   if(q.length<2){document.getElementById('srch-box').style.display='none';return;}
-  const res=PRODS.filter(p=>
-    String(p.codProducto).toLowerCase().includes(q)||
-    String(p.nombre).toLowerCase().includes(q)||
-    String(p.codBarra||'').toLowerCase().includes(q)
-  ).slice(0,8);
+  const res=buscarLocal(q);
   mostrarRes(res);
   if(res.length===1) selProd(res[0]);
 }
+
 document.getElementById('srch').addEventListener('input',function(){
-  const q=this.value.trim().toLowerCase();
+  const q=this.value.trim();
+  clearTimeout(searchTimer);
   if(q.length<2){document.getElementById('srch-box').style.display='none';return;}
-  mostrarRes(PRODS.filter(p=>
-    String(p.codProducto).toLowerCase().includes(q)||
-    String(p.nombre).toLowerCase().includes(q)
-  ).slice(0,6));
+  searchTimer=setTimeout(()=>{
+    const res=buscarLocal(q);
+    mostrarRes(res);
+  }, 200);
 });
+
+async function ejecutarBusqueda(q){
+  setStatus('🔍 Buscando...');
+  try {
+    const res = await buscarEnFirestore(q);
+    mostrarRes(res);
+    if(res.length===1) selProd(res[0]);
+    setStatus('🔥 Firebase conectado');
+  } catch(e){
+    setStatus('⚠️ Error en búsqueda');
+    console.error(e);
+  }
+}
 function mostrarRes(res){
   const box=document.getElementById('srch-box');
   if(!res.length){box.style.display='none';return;}
