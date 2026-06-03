@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Importador Productos — Electrocaribe</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-auth-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.0/firebase-firestore-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:#1a1a2e;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:#12122a;border:1px solid #2a2a4a;border-radius:16px;padding:28px;max-width:500px;width:100%;display:flex;flex-direction:column;gap:16px}
+h1{font-size:18px;font-weight:800;text-align:center}
+.sub{color:#555;font-size:12px;text-align:center}
+.drop-zone{border:2px dashed #2a2a4a;border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:border .2s;color:#555;font-size:13px}
+.drop-zone.over{border-color:#f97316;color:#f97316}
+.drop-zone input{display:none}
+.preview{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:10px;padding:12px;font-size:11px;color:#888;max-height:140px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+.progress-bar{background:#1a1a2e;border-radius:8px;height:10px;overflow:hidden;display:none}
+.progress-fill{height:100%;background:#f97316;width:0%;transition:width .3s;border-radius:8px}
+.status{font-size:12px;text-align:center;color:#888;min-height:16px}
+.status.ok{color:#22c55e} .status.err{color:#ef4444} .status.loading{color:#f97316}
+.btn{background:#f97316;border:none;border-radius:10px;padding:14px;color:#fff;font-size:14px;font-weight:700;width:100%;cursor:pointer}
+.btn:disabled{background:#3a2a1a;color:#7a4a2a;cursor:not-allowed}
+.btn:active:not(:disabled){opacity:.85}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:8px;padding:10px;text-align:center}
+.stat-val{color:#f97316;font-size:20px;font-weight:700}
+.stat-lbl{color:#555;font-size:10px;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.warning{background:#2a1a0a;border:1px solid #7a3a0a;border-radius:8px;padding:10px 14px;font-size:11px;color:#f97316}
+</style>
+</head>
+<body>
+<div class="card">
+  <div>
+    <h1>📦 Importador de Productos</h1>
+    <div class="sub">Electrocaribe · Sigma ERP</div>
+  </div>
+
+  <div class="warning">⚠️ Usa este importador <strong>una sola vez</strong>. Si lo ejecutas de nuevo, duplicará los productos. Para actualizar el catálogo, borra la colección <code>productos</code> en Firestore primero.</div>
+
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <input type="file" id="fileInput" accept=".csv,.txt"/>
+    <div style="font-size:28px;margin-bottom:8px">📂</div>
+    <div>Haz clic o arrastra aquí el archivo</div>
+    <div style="font-size:11px;margin-top:4px"><strong>Articulos_19032026.csv</strong></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="sTot">0</div><div class="stat-lbl">Total</div></div>
+    <div class="stat"><div class="stat-val" id="sOk" style="color:#22c55e">0</div><div class="stat-lbl">Importados</div></div>
+    <div class="stat"><div class="stat-val" id="sErr" style="color:#ef4444">0</div><div class="stat-lbl">Errores</div></div>
+  </div>
+
+  <div class="preview" id="preview">Vista previa del archivo aparecerá aquí...</div>
+
+  <div class="progress-bar" id="progBar">
+    <div class="progress-fill" id="progFill"></div>
+  </div>
+
+  <div class="status" id="status">Selecciona el archivo CSV para comenzar</div>
+
+  <button class="btn" id="btnImport" disabled onclick="importar()">IMPORTAR A FIREBASE</button>
+</div>
+
+<script>
+const fbConfig = {
+  apiKey: "AIzaSyB-UJDH3Z7OQLpakhskVWewGPuh7pnsskg",
+  authDomain: "inventario-electrocaribe.firebaseapp.com",
+  projectId: "inventario-electrocaribe",
+  storageBucket: "inventario-electrocaribe.firebasestorage.app",
+  messagingSenderId: "703396323373",
+  appId: "1:703396323373:web:e96989896ce790fae018a4"
+};
+firebase.initializeApp(fbConfig);
+const db = firebase.firestore();
+
+let parsedData = [];
+
+// Drag & Drop
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', ()=> dz.classList.remove('over'));
+dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('over'); handleFile(e.dataTransfer.files[0]); });
+document.getElementById('fileInput').addEventListener('change', e=> handleFile(e.target.files[0]));
+
+function handleFile(file){
+  if(!file) return;
+  setStatus(`📄 Leyendo: ${file.name}...`, 'loading');
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    dynamicTyping: true,
+    complete: res => {
+      parsedData = res.data.filter(r => r.codProducto);
+      document.getElementById('sTot').textContent = parsedData.length;
+      // Preview primeras 3 filas
+      const prev = parsedData.slice(0,3).map(r=>
+        `[${r.codProducto}] ${r.n_producto} | ${r.n_marca} | ${r.unidad} | Fam:${r.Familia} Grp:${r.Grupo}`
+      ).join('\n');
+      document.getElementById('preview').textContent = `✅ ${parsedData.length} productos encontrados\n\nEjemplos:\n${prev}`;
+      document.getElementById('btnImport').disabled = false;
+      setStatus(`✅ Archivo listo — ${parsedData.length} productos para importar`, 'ok');
+    },
+    error: err => setStatus(`❌ Error leyendo CSV: ${err.message}`, 'err')
+  });
+}
+
+async function importar(){
+  if(!parsedData.length){ setStatus('⚠️ No hay datos', 'err'); return; }
+  document.getElementById('btnImport').disabled = true;
+  document.getElementById('progBar').style.display = 'block';
+
+  const BATCH = 400; // Firestore límite ~500 por batch
+  let ok=0, err=0;
+  const total = parsedData.length;
+
+  for(let i=0; i<parsedData.length; i+=BATCH){
+    const chunk = parsedData.slice(i, i+BATCH);
+    const batch = db.batch();
+    chunk.forEach(row => {
+      const cod = String(row.codProducto).trim();
+      const ref = db.collection('productos').doc(cod);
+      batch.set(ref, {
+        codProducto:    cod,
+        codAntiguo:     String(row.codProducto_antiguo||'').trim(),
+        nombre:         String(row.n_producto||'').trim(),
+        marca:          String(row.n_marca||'').trim(),
+        unidad:         String(row.unidad||'').trim(),
+        familia:        String(row.Familia||'').trim(),
+        grupo:          String(row.Grupo||'').trim(),
+        subgrupo:       String(row.subgrupo_codigo||'').trim(),
+        codBarra:       String(row.cod_bar||'').trim(),
+        sugerido:       Number(row.sugerido)||0,
+        idperfil:       String(row.idperfil||'').trim(),
+      });
+    });
+    try {
+      await batch.commit();
+      ok += chunk.length;
+    } catch(e) {
+      err += chunk.length;
+      console.error(e);
+    }
+    // Actualizar UI
+    const pct = Math.round((i+chunk.length)/total*100);
+    document.getElementById('progFill').style.width = pct+'%';
+    document.getElementById('sOk').textContent = ok;
+    document.getElementById('sErr').textContent = err;
+    setStatus(`⏳ Importando... ${ok}/${total} productos (${pct}%)`, 'loading');
+    // Pequeña pausa para no saturar Firestore
+    await new Promise(r=>setTimeout(r,300));
+  }
+
+  if(err===0){
+    setStatus(`✅ ¡Listo! ${ok} productos importados correctamente a Firebase`, 'ok');
+    document.getElementById('progFill').style.background='#22c55e';
+  } else {
+    setStatus(`⚠️ Completado: ${ok} OK · ${err} con error`, 'err');
+  }
+}
+
+function setStatus(msg, cls){
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status' + (cls?' '+cls:'');
+}
+</script>
+</body>
+</html>
