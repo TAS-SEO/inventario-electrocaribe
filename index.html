@@ -437,47 +437,74 @@ async function finalizarConteo(){
     sesion=null; await guardarSesion();
     historial=[]; await guardarHistorial();
     renderSesionUI(); renderTandas(); actualizarMetricas(); renderHistorial(); renderSerie();
-    st.className='up-status ok'; st.textContent=`✅ ${tanda.nombre} guardada — descargando Excel...`;
-    setTimeout(()=>descargarExcel(0), 800);
+    st.className='up-status ok'; st.textContent=`✅ ${tanda.nombre} guardada — descargando archivos...`;
+    setTimeout(()=>{ descargarExcel(0); setTimeout(()=>descargarTxt(0), 800); }, 500);
     showToast(`✅ Tanda ${tanda.numero} finalizada`);
   } catch(e){
     st.className='up-status err'; st.textContent=`⚠️ Error: ${e.message}`;
   }
 }
 
-// ── EXCEL ─────────────────────────────────────────────────
+// ── EXCEL (limpio para ERP) ───────────────────────────────
 function descargarExcel(idx){
-  const t=tandas[idx];
-  const wb=XLSX.utils.book_new();
-  const data=[
-    ['INVENTARIO ELECTROCARIBE - SIGMA ERP'],
-    ['Tanda:',t.nombre],
-    ['Inicio:',new Date(t.inicio).toLocaleString('es-CO')],
-    ['Fin:',new Date(t.fin).toLocaleString('es-CO')],
-    ['Duración:',t.duracion],
-    ['Registrado por:',t.creadoPor],
-    [],
-    // Columnas exactas del CSV original + campos de inventario
-    ['codProducto','codProducto_antiguo','n_producto','n_marca','unidad',
-     'Familia','Grupo','subgrupo_codigo','cod_bar','Bodega','Cantidad','Fecha/Hora','Usuario'],
-    ...t.items.map(h=>[
-      h.codProducto||h.codigo||'',
-      h.codAntiguo||'',
-      h.nombre||'',
-      h.marca||'',
-      h.unidad||h.um||'',
-      h.familia||'',
-      h.grupo||'',
-      h.subgrupo||'',
-      h.codBarra||'',
-      h.bodega||'',
-      h.cantidad||0,
-      new Date(h.ts).toLocaleString('es-CO'),
-      h.usuario||''
+  const t = tandas[idx];
+  const wb = XLSX.utils.book_new();
+  const filas = [
+    ['idproducto','idbodega','cantidad','precio'],
+    ...t.items.map(h => [
+      h.codProducto || '',
+      1,
+      h.cantidad || 0,
+      prodsCache[h.codProducto]?.sugerido || 0
     ])
   ];
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),t.nombre.substring(0,31));
-  XLSX.writeFile(wb,`${t.nombre}.xlsx`);
+  const ws = XLSX.utils.aoa_to_sheet(filas);
+  ws['!cols'] = [{wch:14},{wch:10},{wch:10},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws, 'inventario');
+  XLSX.writeFile(wb, `${t.nombre}.xlsx`);
+}
+
+// ── TEXTO PLANO (auditoría) ───────────────────────────────
+function descargarTxt(idx){
+  const t = tandas[idx];
+  const lineas = [
+    '═══════════════════════════════════════════',
+    '   REPORTE DE TANDA — INVENTARIO ELECTROCARIBE',
+    '═══════════════════════════════════════════',
+    `Tanda:       ${t.nombre}`,
+    `Inicio:      ${new Date(t.inicio).toLocaleString('es-CO')}`,
+    `Fin:         ${new Date(t.fin).toLocaleString('es-CO')}`,
+    `Duración:    ${t.duracion}`,
+    `Usuario:     ${t.creadoPor}`,
+    `Registros:   ${t.items.length}`,
+    `Total uds:   ${t.items.reduce((a,h)=>a+h.cantidad,0)}`,
+    '',
+    '───────────────────────────────────────────',
+    'DETALLE POR BODEGA',
+    '───────────────────────────────────────────',
+    ...['Bodega Principal','Bodega Atras','Bodega Frente','Punto de Venta'].map(b => {
+      const items = t.items.filter(h=>h.bodega===b);
+      if(!items.length) return `${b}: sin registros`;
+      return `${b}: ${items.reduce((a,h)=>a+h.cantidad,0)} uds (${items.length} items)`;
+    }),
+    '',
+    '───────────────────────────────────────────',
+    'DETALLE COMPLETO',
+    '───────────────────────────────────────────',
+    ...t.items.map((h,i)=>
+      `${String(i+1).padStart(3,'0')}. [${h.codProducto}] ${h.nombre}\n     Bodega: ${h.bodega} | Cant: ${h.cantidad} | ${new Date(h.ts).toLocaleString('es-CO')} | ${h.usuario}`
+    ),
+    '',
+    '═══════════════════════════════════════════',
+    `Generado: ${new Date().toLocaleString('es-CO')}`,
+    '═══════════════════════════════════════════',
+  ];
+  const blob = new Blob([lineas.join('\n')], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${t.nombre}-reporte.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 // ── BÚSQUEDA ──────────────────────────────────────────────
@@ -674,7 +701,8 @@ function renderTandas(){
       <div>
         <div class="tname">📄 ${t.nombre}</div>
         <div class="tmeta">${dd}/${mo} ${hh}:${mm} · ${t.creadoPor}</div>
-        <button class="btn-dl" onclick="descargarExcel(${i})">⬇ Descargar Excel</button>
+        <button class="btn-dl" onclick="descargarExcel(${i})">⬇ Excel (.xlsx)</button>
+        <button class="btn-dl" onclick="descargarTxt(${i})" style="margin-top:3px;border-color:#22c55e;color:#22c55e">⬇ Reporte (.txt)</button>
       </div>
       <div>
         <div class="tdur">⏱ ${t.duracion}</div>
@@ -698,5 +726,4 @@ function showToast(msg){
 }
 </script>
 </body>
-</html>
 </html>
