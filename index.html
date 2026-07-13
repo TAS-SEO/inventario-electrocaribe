@@ -27,11 +27,11 @@
 html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;background:var(--bg);color:var(--text)}
 
 /* ── LAYOUT GENERAL ── */
-.page-wrap{max-width:var(--max);margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.page-wrap{width:100%;max-width:var(--max);margin:0;min-height:100vh;display:flex;flex-direction:column}
 
 /* ── HEADER ── */
 .header{background:var(--header);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;padding:0 1.5rem}
-.header-inner{max-width:var(--max);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 0}
+.header-inner{max-width:var(--max);margin:0;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 0}
 .brand{display:flex;align-items:center;gap:.75rem}
 .brand-logo{width:44px;height:44px;flex-shrink:0}
 .brand-text{}
@@ -45,7 +45,7 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
 
 /* ── SCROLL BODY ── */
 .scroll-body{flex:1;overflow-y:auto;padding:1.25rem 1.5rem;padding-bottom:max(1.5rem,env(safe-area-inset-bottom))}
-.content-grid{display:grid;gap:1rem}
+.content-grid{display:grid;gap:1rem;width:100%;margin:0}
 
 /* ── DESKTOP: 2 columnas ── */
 @media(min-width:768px){
@@ -713,6 +713,8 @@ function setTab(t){
 }
 function showToast(msg){
   const t=document.getElementById('toast');
+  const isError = msg.startsWith('⚠️') || msg.startsWith('❌');
+  t.style.background = isError ? 'var(--red)' : 'var(--green)';
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2300);
 }
