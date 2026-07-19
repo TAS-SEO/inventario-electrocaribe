@@ -397,8 +397,8 @@ auth.onAuthStateChanged(async user=>{
 async function cargarDatos(){
   try{
     const[sesSnap,hSnap,tSnap]=await Promise.all([
-      db.doc('sesiones/activa').get(),
-      db.doc('sesiones/historial').get(),
+      db.doc(`sesiones/activa_${currentUser.uid}`).get(),
+      db.doc(`sesiones/historial_${currentUser.uid}`).get(),
       db.collection('tandas').orderBy('fin','desc').get()
     ]);
     if(sesSnap.exists&&sesSnap.data().nombre){
@@ -414,8 +414,9 @@ async function cargarDatos(){
   document.getElementById('overlay').classList.add('off');
 }
 
-async function guardarHistorial(){await db.doc('sesiones/historial').set({items:historial});}
-async function guardarSesion(){await db.doc('sesiones/activa').set(sesion||{});}
+function uid(){return currentUser.uid;}
+async function guardarHistorial(){await db.doc(`sesiones/historial_${uid()}`).set({items:historial});}
+async function guardarSesion(){await db.doc(`sesiones/activa_${uid()}`).set(sesion||{});}
 
 // ── PRODUCTOS ─────────────────────────────────────────────
 async function cargarProductos(){
