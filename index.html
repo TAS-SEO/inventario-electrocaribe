@@ -591,6 +591,8 @@ function renderFicha(){
     <div class="drow"><span class="dlbl">Familia</span><span class="dval">${p.familia||'-'}</span></div>
     <div class="drow"><span class="dlbl">Grupo</span><span class="dval">${p.grupo||'-'}</span></div>
     <div class="drow"><span class="dlbl">Subgrupo</span><span class="dval">${p.subgrupo||'-'}</span></div>
+    <div class="drow"><span class="dlbl">Precio sugerido</span><span class="dval">$ ${Number(p.sugerido||0).toLocaleString('es-CO')}</span></div>
+    <div class="drow"><span class="dlbl">Costo</span><span class="dval">$ ${Number(p.ccostos||0).toLocaleString('es-CO')}</span></div>
     <div class="drow"><span class="dlbl">Cód. Barra</span><span class="dval">${p.codBarra||'-'}</span></div>`;
 }
 function selBodega(n,id){
