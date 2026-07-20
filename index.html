@@ -10,57 +10,34 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
-  --orange:#f97316;
-  --green:#22c55e;
-  --red:#ef4444;
-  --bg:#1a1a2e;
-  --card:#1e1e38;
-  --header:#12122a;
-  --border:#2a2a4a;
-  --text:#ffffff;
-  --muted:#888;
-  --max:1200px;
-  --radius:12px;
-  --fs:16px;
+  --orange:#f97316;--green:#22c55e;--red:#ef4444;
+  --bg:#1a1a2e;--card:#1e1e38;--header:#12122a;--border:#2a2a4a;
+  --text:#ffffff;--muted:#888;--max:1200px;--radius:12px;--fs:16px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;background:var(--bg);color:var(--text)}
-
-/* ── LAYOUT GENERAL ── */
 .page-wrap{width:100%;max-width:var(--max);margin:0;min-height:100vh;display:flex;flex-direction:column}
-
-/* ── HEADER ── */
 .header{background:var(--header);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;padding:0 1.5rem}
-.header-inner{max-width:var(--max);margin:0;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 0}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 0}
 .brand{display:flex;align-items:center;gap:.75rem}
-.brand-logo{width:44px;height:44px;flex-shrink:0}
-.brand-text{}
 .brand-name{font-size:1.1rem;font-weight:800;color:var(--text);line-height:1.1}
-.brand-sub{font-size:.75rem;color:var(--muted);margin-top:2px}
+.header-user{font-size:.7rem;color:#555;margin-top:2px}
 .header-right{display:flex;align-items:center;gap:.75rem}
 .badge-fb{background:#0d2e1a;color:var(--green);font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:6px;white-space:nowrap}
-.btn-logout{background:none;border:1px solid #3a3a6e;border-radius:6px;color:var(--muted);font-size:.8rem;padding:5px 12px;cursor:pointer;white-space:nowrap}
+.btn-logout{background:none;border:1px solid #3a3a6e;border-radius:6px;color:var(--muted);font-size:.8rem;padding:5px 12px;cursor:pointer}
 .btn-logout:hover{border-color:var(--orange);color:var(--orange)}
-.header-user{font-size:.7rem;color:#555}
-
-/* ── SCROLL BODY ── */
 .scroll-body{flex:1;overflow-y:auto;padding:1.25rem 1.5rem;padding-bottom:max(1.5rem,env(safe-area-inset-bottom))}
 .content-grid{display:grid;gap:1rem;width:100%;margin:0}
-
-/* ── DESKTOP: 2 columnas ── */
 @media(min-width:768px){
   .content-grid{grid-template-columns:1fr 1fr;align-items:start}
   .col-left{display:flex;flex-direction:column;gap:1rem}
   .col-right{display:flex;flex-direction:column;gap:1rem}
-  .full-width{grid-column:1/-1}
 }
 @media(max-width:767px){
   .col-left,.col-right{display:contents}
   .header-inner{flex-wrap:wrap;gap:.5rem}
   .scroll-body{padding:1rem}
 }
-
-/* ── SESIÓN ── */
 .session-bar{background:var(--header);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;display:flex;flex-direction:column;gap:.75rem}
 .session-row{display:flex;align-items:center;justify-content:space-between;gap:1rem}
 .session-label{color:var(--muted);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
@@ -69,21 +46,17 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
 .tanda-badge{background:var(--card);border:1px solid #3a3a6e;border-radius:6px;padding:3px 12px;color:#aaa;font-size:.85rem;font-weight:700;display:inline-block}
 .tanda-badge.on{background:#0d2e1a;border-color:var(--green);color:var(--green)}
 .session-btns{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
-.btn-ini{background:var(--green);border:none;border-radius:10px;padding:.8rem;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-ini{background:var(--green);border:none;border-radius:10px;padding:.8rem;color:#fff;font-size:1rem;font-weight:700;cursor:pointer}
 .btn-ini:disabled{background:#1a3a2a;color:#2d5a3d;cursor:not-allowed}
-.btn-fin{background:var(--red);border:none;border-radius:10px;padding:.8rem;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-fin{background:var(--red);border:none;border-radius:10px;padding:.8rem;color:#fff;font-size:1rem;font-weight:700;cursor:pointer}
 .btn-fin:disabled{background:#3a1a1a;color:#5a2d2d;cursor:not-allowed}
 .btn-ini:active:not(:disabled),.btn-fin:active:not(:disabled){opacity:.85}
 .up-status{font-size:.8rem;color:var(--muted);text-align:center;min-height:1rem}
 .up-status.ok{color:var(--green)}.up-status.err{color:var(--red)}.up-status.loading{color:var(--orange)}
-
-/* ── MÉTRICAS ── */
 .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
 .metric{background:var(--header);border-radius:10px;border:1px solid var(--border);padding:.75rem .5rem;text-align:center}
 .metric-val{color:var(--orange);font-size:1.5rem;font-weight:700;line-height:1}
 .metric-lbl{color:#555;font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;margin-top:4px}
-
-/* ── BÚSQUEDA ── */
 .search-wrap{display:flex;flex-direction:column;gap:.75rem}
 .slbl{color:var(--muted);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:.3rem}
 .inp{background:var(--header);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;color:var(--text);font-size:1rem;width:100%;outline:none;transition:border .2s}
@@ -98,46 +71,34 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
 .si-code{color:var(--orange);font-size:.75rem;font-weight:700}
 .si-name{color:#ddd;font-size:.9rem;margin-top:2px}
 .si-fam{color:#555;font-size:.75rem;margin-top:1px}
-
-/* ── TABS ── */
 .tabs{display:flex;background:var(--header);border-radius:10px;overflow:hidden;border:1px solid var(--border)}
 .tab{flex:1;padding:.65rem .25rem;font-size:.8rem;font-weight:600;color:#666;text-align:center;cursor:pointer;border-radius:8px;transition:all .2s}
 .tab.active{background:var(--orange);color:#fff}
-
-/* ── CARD ── */
 .card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
 .drow{display:flex;padding:.65rem 1rem;border-bottom:1px solid #25253e;gap:.5rem}
 .drow:last-child{border-bottom:none}
 .dlbl{color:#777;font-size:.8rem;min-width:110px;padding-top:1px;flex-shrink:0}
 .dval{color:var(--text);font-size:.9rem;font-weight:500;flex:1;word-break:break-word}
 .dval.hl{color:var(--orange)}
-
-/* ── BODEGAS ── */
 .bgrid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
 @media(min-width:768px){.bgrid{grid-template-columns:repeat(4,1fr)}}
 .bbtn{background:var(--header);border:1px solid var(--border);border-radius:9px;padding:.7rem .5rem;color:var(--muted);font-size:.9rem;font-weight:600;text-align:center;cursor:pointer;transition:all .2s}
 .bbtn.sel{background:var(--orange);border-color:var(--orange);color:#fff}
 .bbtn:hover:not(.sel){border-color:var(--orange);color:var(--orange)}
-
-/* ── QTY ── */
 .qty-row{display:flex;align-items:center;gap:.75rem}
-.qbtn{width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;font-size:1.4rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .2s}
+.qbtn{width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;font-size:1.4rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .qbtn.plus{background:var(--green);color:#fff}
 .qbtn.minus{background:var(--orange);color:#fff}
 .qbtn:active{opacity:.8;transform:scale(.93)}
 .qinp{flex:1;background:var(--header);border:1px solid var(--border);border-radius:10px;padding:.65rem;color:var(--text);font-size:1.2rem;font-weight:700;text-align:center;outline:none;min-width:0}
 .qinp:focus{border-color:var(--orange)}
-
-/* ── ACTIONS ── */
 .arow{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
-.btn-env{background:var(--orange);border:none;border-radius:10px;padding:.85rem;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-env{background:var(--orange);border:none;border-radius:10px;padding:.85rem;color:#fff;font-size:1rem;font-weight:700;cursor:pointer}
 .btn-env:active{opacity:.85}
 .btn-mod{background:var(--card);border:1px solid #3a3a6e;border-radius:10px;padding:.85rem;color:#aaa;font-size:1rem;font-weight:700;cursor:pointer}
 .btn-mod:hover{border-color:var(--orange);color:var(--orange)}
 .btn-del{background:var(--card);border:1px solid #7f1d1d;border-radius:10px;padding:.7rem 1rem;color:var(--red);font-size:.9rem;font-weight:700;cursor:pointer;width:100%;margin-top:.25rem}
 .btn-del:hover{background:#3a1a1a}
-
-/* ── HISTORIAL ── */
 .empty{text-align:center;padding:2rem 1rem;color:#444;font-size:1rem}
 .empty-i{font-size:2rem;margin-bottom:.5rem;opacity:.5}
 .hitem{padding:.75rem 1rem;border-bottom:1px solid #25253e}
@@ -151,14 +112,10 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
 .hright{display:flex;align-items:center;gap:.5rem}
 .hqty{color:var(--green);font-size:1rem;font-weight:700}
 .hedit{background:none;border:1px solid var(--orange);color:var(--orange);font-size:.75rem;padding:2px 8px;border-radius:4px;cursor:pointer}
-
-/* ── SERIE ── */
 .srow{display:flex;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid #25253e;font-size:.9rem}
 .srow:last-child{border-bottom:none}
 .skey{color:var(--muted)}
 .sval{color:var(--text);font-weight:600}
-
-/* ── TANDAS ── */
 .titem{padding:.75rem 1rem;border-bottom:1px solid #25253e;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem}
 .titem:last-child{border-bottom:none}
 .tname{color:var(--orange);font-size:.9rem;font-weight:700}
@@ -168,9 +125,6 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
 .btn-dl{background:none;border:1px solid #3a3a6e;color:#aaa;font-size:.75rem;padding:3px 10px;border-radius:5px;cursor:pointer;margin-top:.4rem;display:inline-block;margin-right:4px}
 .btn-dl:hover{border-color:var(--orange);color:var(--orange)}
 .btn-dl.txt{border-color:var(--green);color:var(--green)}
-.btn-dl.txt:hover{background:#0d2e1a}
-
-/* ── MISC ── */
 .umbadge{background:#0d2e1a;color:var(--green);font-size:.8rem;font-weight:700;padding:2px 10px;border-radius:4px}
 .toast{position:fixed;bottom:max(1.5rem,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:.65rem 1.5rem;border-radius:20px;font-size:.9rem;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
@@ -178,10 +132,7 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
 .overlay.off{display:none}
 .spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-
-/* ── LOGIN ── */
 .login-page{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;padding:2rem 1.5rem;gap:1.25rem;background:var(--bg)}
-.login-logo{width:90px;height:90px}
 .login-title{font-size:1.5rem;font-weight:800;color:var(--text);text-align:center}
 .login-sub{font-size:.9rem;color:#555;text-align:center}
 .login-card{background:var(--header);border:1px solid var(--border);border-radius:16px;padding:1.75rem;width:100%;max-width:420px;display:flex;flex-direction:column;gap:.9rem}
@@ -192,9 +143,6 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
 .btn-login{background:var(--orange);border:none;border-radius:10px;padding:.9rem;color:#fff;font-size:1rem;font-weight:700;width:100%;cursor:pointer;margin-top:.25rem}
 .btn-login:active{opacity:.85}
 .login-err{color:var(--red);font-size:.85rem;text-align:center;min-height:1rem}
-
-/* ── MOTO SVG inline ── */
-.moto-svg{display:block}
 </style>
 </head>
 <body>
@@ -206,7 +154,6 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
 
 <!-- LOGIN -->
 <div id="login-page" class="login-page" style="display:none">
-  <!-- Moto Yamaha SVG -->
   <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
     <img src="https://raw.githubusercontent.com/TAS-SEO/inventario-electrocaribe/main/moto-yamaha.png" style="width:100px;height:100px;object-fit:contain" alt="Pablito Inventarea"/>
     <div class="login-title" style="margin:0">Pablito Inventarea</div>
@@ -228,12 +175,11 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
 
 <!-- APP -->
 <div class="page-wrap" id="main-app" style="display:none">
-
   <div class="header">
     <div class="header-inner">
       <div class="brand">
         <img src="https://raw.githubusercontent.com/TAS-SEO/inventario-electrocaribe/main/moto-yamaha.png" style="width:44px;height:44px;object-fit:contain" alt="moto"/>
-        <div class="brand-text">
+        <div>
           <div class="brand-name">Pablito Inventarea</div>
           <div class="header-user" id="huser"></div>
         </div>
@@ -247,11 +193,7 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
 
   <div class="scroll-body">
     <div class="content-grid">
-
-      <!-- COL IZQUIERDA -->
       <div class="col-left">
-
-        <!-- Sesión -->
         <div class="session-bar">
           <div class="session-row">
             <div>
@@ -269,15 +211,11 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
           </div>
           <div class="up-status" id="upStatus"></div>
         </div>
-
-        <!-- Métricas -->
         <div class="metrics">
           <div class="metric"><div class="metric-val" id="mC">0</div><div class="metric-lbl">Conteos</div></div>
           <div class="metric"><div class="metric-val" id="mP">0</div><div class="metric-lbl">Productos</div></div>
           <div class="metric"><div class="metric-val" id="mU">0</div><div class="metric-lbl">Unidades</div></div>
         </div>
-
-        <!-- Búsqueda -->
         <div class="search-wrap">
           <div>
             <div class="slbl">Buscar producto</div>
@@ -286,21 +224,15 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
           <div id="srch-box" style="display:none"></div>
           <button class="btn-srch" onclick="buscar()">🔍 BUSCAR</button>
         </div>
-
       </div>
 
-      <!-- COL DERECHA -->
       <div class="col-right">
-
-        <!-- Tabs -->
         <div class="tabs">
           <div class="tab active" id="tab-desc" onclick="setTab('desc')">Ficha</div>
           <div class="tab" id="tab-hist" onclick="setTab('hist')">Historial</div>
           <div class="tab" id="tab-serie" onclick="setTab('serie')">Serie</div>
           <div class="tab" id="tab-tandas" onclick="setTab('tandas')">Tandas</div>
         </div>
-
-        <!-- Panel Ficha -->
         <div id="panel-desc" style="display:flex;flex-direction:column;gap:.75rem">
           <div class="card" id="ficha">
             <div class="empty"><div class="empty-i">🔌</div><div>Busca un producto para ver su ficha</div></div>
@@ -327,25 +259,17 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
             <button class="btn-mod" onclick="modificar()">MODIFICAR</button>
           </div>
         </div>
-
-        <!-- Panel Historial -->
         <div id="panel-hist" style="display:none;flex-direction:column;gap:.75rem">
           <div class="card" id="hist-list"><div class="empty"><div class="empty-i">📋</div><div>Sin registros aún</div></div></div>
           <button class="btn-del" onclick="confirmarReset()">🗑️ BORRAR HISTORIAL DE TANDA ACTUAL</button>
         </div>
-
-        <!-- Panel Serie -->
         <div id="panel-serie" style="display:none;flex-direction:column;gap:.75rem">
           <div class="card" id="serie-list"><div class="empty"><div class="empty-i">📊</div><div>Sin conteos</div></div></div>
         </div>
-
-        <!-- Panel Tandas -->
         <div id="panel-tandas" style="display:none;flex-direction:column;gap:.75rem">
           <div class="card" id="tandas-list"><div class="empty"><div class="empty-i">📁</div><div>No hay tandas finalizadas</div></div></div>
         </div>
-
       </div>
-
     </div>
   </div>
 </div>
@@ -353,10 +277,19 @@ html,body{height:100%;font-size:var(--fs);font-family:-apple-system,BlinkMacSyst
 <div class="toast" id="toast"></div>
 
 <script>
-const fbConfig={apiKey:"AIzaSyB-UJDH3Z7OQLpakhskVWewGPuh7pnsskg",authDomain:"inventario-electrocaribe.firebaseapp.com",projectId:"inventario-electrocaribe",storageBucket:"inventario-electrocaribe.firebasestorage.app",messagingSenderId:"703396323373",appId:"1:703396323373:web:e96989896ce790fae018a4"};
+// ── FIREBASE ──────────────────────────────────────────────
+const fbConfig={
+  apiKey:"AIzaSyB-UJDH3Z7OQLpakhskVWewGPuh7pnsskg",
+  authDomain:"inventario-electrocaribe.firebaseapp.com",
+  projectId:"inventario-electrocaribe",
+  storageBucket:"inventario-electrocaribe.firebasestorage.app",
+  messagingSenderId:"703396323373",
+  appId:"1:703396323373:web:e96989896ce790fae018a4"
+};
 firebase.initializeApp(fbConfig);
 const auth=firebase.auth(), db=firebase.firestore();
 
+// ── ESTADO ────────────────────────────────────────────────
 let historial=[],tandas=[],sesion=null;
 let prodActual=null,bodegaActual='',editIdx=null;
 let cronTimer=null,cronSeg=0;
@@ -372,7 +305,8 @@ function doLogin(){
   const pass=document.getElementById('lpass').value;
   document.getElementById('lerr').textContent='';
   auth.signInWithEmailAndPassword(email,pass).catch(e=>{
-    document.getElementById('lerr').textContent=e.code==='auth/invalid-credential'?'Correo o contraseña incorrectos':'Error al iniciar sesión';
+    document.getElementById('lerr').textContent=
+      e.code==='auth/invalid-credential'?'Correo o contraseña incorrectos':'Error al iniciar sesión';
   });
 }
 function doLogout(){detenerCron();auth.signOut();}
@@ -394,11 +328,15 @@ auth.onAuthStateChanged(async user=>{
 });
 
 // ── FIRESTORE ─────────────────────────────────────────────
+function uid(){return currentUser.uid;}
+async function guardarHistorial(){await db.doc(`sesiones/historial_${uid()}`).set({items:historial});}
+async function guardarSesion(){await db.doc(`sesiones/activa_${uid()}`).set(sesion||{});}
+
 async function cargarDatos(){
   try{
     const[sesSnap,hSnap,tSnap]=await Promise.all([
-      db.doc(`sesiones/activa_${currentUser.uid}`).get(),
-      db.doc(`sesiones/historial_${currentUser.uid}`).get(),
+      db.doc(`sesiones/activa_${uid()}`).get(),
+      db.doc(`sesiones/historial_${uid()}`).get(),
       db.collection('tandas').orderBy('fin','desc').get()
     ]);
     if(sesSnap.exists&&sesSnap.data().nombre){
@@ -407,28 +345,12 @@ async function cargarDatos(){
       iniciarCron();renderSesionUI();
     }
     if(hSnap.exists)historial=hSnap.data().items||[];
-    tandas=tSnap.docs.map(d=>{
-      const data=d.data();
-      return{
-        ...data,
-        items:(data.items||[]).map(h=>({
-          ...h,
-          ccostos: Number(h.ccostos)||0,
-          sugerido: Number(h.sugerido)||0,
-          cantidad: Number(h.cantidad)||0,
-          codProducto: String(h.codProducto||'').trim()
-        }))
-      };
-    });
+    tandas=tSnap.docs.map(d=>d.data());
   }catch(e){setStatus('⚠️ Error Firebase');}
   await cargarProductos();
   actualizarMetricas();renderHistorial();renderSerie();renderTandas();
   document.getElementById('overlay').classList.add('off');
 }
-
-function uid(){return currentUser.uid;}
-async function guardarHistorial(){await db.doc(`sesiones/historial_${uid()}`).set({items:historial});}
-async function guardarSesion(){await db.doc(`sesiones/activa_${uid()}`).set(sesion||{});}
 
 // ── PRODUCTOS ─────────────────────────────────────────────
 async function cargarProductos(){
@@ -441,26 +363,18 @@ async function cargarProductos(){
       const snap=await q.get();
       if(snap.empty)break;
       snap.docs.forEach(d=>{
-        const data=d.data();
-        todos.push(data);
+        const p=d.data();
+        const cod=String(p.codProducto||'').trim();
+        prodsCache[cod]={...p,ccostos:Number(p.ccostos)||0,sugerido:Number(p.sugerido)||0};
+        todos.push(p);
       });
       ultimo=snap.docs[snap.docs.length-1];
     }while(todos.length%1000===0&&todos.length>0);
     PRODS=todos;
-    PRODS.forEach(p=>{
-      const cod=String(p.codProducto).trim();
-      prodsCache[cod]={
-        ...p,
-        ccostos: Number(p.ccostos)||0,
-        sugerido: Number(p.sugerido)||0
-      };
-    });
     prodsCargados=true;
-    // Verificar que ccostos llegó
-    const muestra=Object.values(prodsCache).find(p=>p.ccostos>0);
-    if(muestra) setStatus(`🔥 Firebase · ${PRODS.length} productos · ccostos ✅`);
-    else setStatus(`🔥 Firebase · ${PRODS.length} productos · ccostos ⚠️`);
-  }catch(e){setStatus('⚠️ Error cargando productos: '+e.message);}
+    const conCosto=Object.values(prodsCache).filter(p=>p.ccostos>0).length;
+    setStatus(`🔥 Firebase · ${PRODS.length} productos · ${conCosto} con costo`);
+  }catch(e){setStatus('⚠️ Error: '+e.message);}
 }
 
 function buscarLocal(q){
@@ -479,10 +393,8 @@ function iniciarCron(){
   document.getElementById('chrono').classList.remove('off');
   cronTimer=setInterval(()=>{
     cronSeg++;
-    const h=String(Math.floor(cronSeg/3600)).padStart(2,'0');
-    const m=String(Math.floor((cronSeg%3600)/60)).padStart(2,'0');
-    const s=String(cronSeg%60).padStart(2,'0');
-    document.getElementById('chrono').textContent=`${h}:${m}:${s}`;
+    document.getElementById('chrono').textContent=
+      `${String(Math.floor(cronSeg/3600)).padStart(2,'0')}:${String(Math.floor((cronSeg%3600)/60)).padStart(2,'0')}:${String(cronSeg%60).padStart(2,'0')}`;
   },1000);
 }
 function detenerCron(){if(cronTimer){clearInterval(cronTimer);cronTimer=null;}document.getElementById('chrono').classList.add('off');}
@@ -516,30 +428,40 @@ async function finalizarConteo(){
     fin:new Date().toISOString(),duracion:fmtDur(cronSeg),duracionSeg:cronSeg,
     creadoPor:currentUser.email,items:[...historial]};
   const st=document.getElementById('upStatus');
-  st.className='up-status loading';st.textContent='💾 Guardando en Firebase...';
+  st.className='up-status loading';st.textContent='💾 Guardando...';
   try{
     await db.collection('tandas').add(tanda);
     tandas.unshift(tanda);
     sesion=null;await guardarSesion();
     historial=[];await guardarHistorial();
     renderSesionUI();renderTandas();actualizarMetricas();renderHistorial();renderSerie();
-    st.className='up-status ok';st.textContent=`✅ ${tanda.nombre} guardada — descargando...`;
+    st.className='up-status ok';st.textContent=`✅ ${tanda.nombre} guardada`;
     setTimeout(()=>{descargarExcel(0);setTimeout(()=>descargarTxt(0),800);},500);
     showToast(`✅ Tanda ${tanda.numero} finalizada`);
-  }catch(e){st.className='up-status err';st.textContent=`⚠️ Error: ${e.message}`;}
+  }catch(e){st.className='up-status err';st.textContent=`⚠️ ${e.message}`;}
 }
 
 // ── EXCEL ─────────────────────────────────────────────────
 function descargarExcel(idx){
-  const t=tandas[idx],wb=XLSX.utils.book_new();
-  const filas=[['idproducto','idbodega','cantidad','precio'],
-    ...t.items.map(h=>[h.codProducto||'',1,h.cantidad||0,prodsCache[h.codProducto]?.sugerido||0])];
+  const t=tandas[idx];
+  const filas=[['idproducto','idbodega','cantidad','costo']];
+  for(let i=0;i<t.items.length;i++){
+    const h=t.items[i];
+    filas.push([
+      String(h.codProducto||''),
+      1,
+      Number(h.cantidad)||0,
+      Number(h.ccostos)||0
+    ]);
+  }
+  const wb=XLSX.utils.book_new();
   const ws=XLSX.utils.aoa_to_sheet(filas);
-  ws['!cols']=[{wch:14},{wch:10},{wch:10},{wch:10}];
+  ws['!cols']=[{wch:16},{wch:10},{wch:10},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ws,'inventario');
   XLSX.writeFile(wb,`${t.nombre}.xlsx`);
 }
 
+// ── TXT ───────────────────────────────────────────────────
 function descargarTxt(idx){
   const t=tandas[idx];
   const lineas=[
@@ -562,11 +484,18 @@ function descargarTxt(idx){
       return items.length?`${b}: ${items.reduce((a,h)=>a+h.cantidad,0)} uds (${items.length} items)`:`${b}: sin registros`;
     }),
     '','───────────────────────────────────────────','DETALLE COMPLETO','───────────────────────────────────────────',
-    ...t.items.map((h,i)=>`${String(i+1).padStart(3,'0')}. [${h.codProducto}] ${h.nombre}\n     Bodega: ${h.bodega} | Cant: ${h.cantidad} | ${new Date(h.ts).toLocaleString('es-CO')} | ${h.usuario}`),
-    '','═══════════════════════════════════════════',`Generado: ${new Date().toLocaleString('es-CO')}`,'═══════════════════════════════════════════',
+    ...t.items.map((h,i)=>
+      `${String(i+1).padStart(3,'0')}. [${h.codProducto}] ${h.nombre}\n     Bodega: ${h.bodega} | Cant: ${h.cantidad} | Costo: $${Number(h.ccostos||0).toLocaleString('es-CO')} | ${new Date(h.ts).toLocaleString('es-CO')} | ${h.usuario}`
+    ),
+    '','═══════════════════════════════════════════',
+    `Generado: ${new Date().toLocaleString('es-CO')}`,
+    '═══════════════════════════════════════════',
   ];
   const blob=new Blob([lineas.join('\n')],{type:'text/plain;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${t.nombre}-reporte.txt`;a.click();URL.revokeObjectURL(a.href);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`${t.nombre}-reporte.txt`;
+  a.click();URL.revokeObjectURL(a.href);
 }
 
 // ── BÚSQUEDA ──────────────────────────────────────────────
@@ -580,7 +509,7 @@ function buscar(){
 document.getElementById('srch').addEventListener('input',function(){
   const q=this.value.trim();clearTimeout(searchTimer);
   if(q.length<2){document.getElementById('srch-box').style.display='none';return;}
-  searchTimer=setTimeout(()=>{mostrarRes(buscarLocal(q));},150);
+  searchTimer=setTimeout(()=>mostrarRes(buscarLocal(q)),150);
 });
 function mostrarRes(res){
   const box=document.getElementById('srch-box');
@@ -636,22 +565,23 @@ async function enviar(){
   const qty=parseInt(document.getElementById('qinp').value)||0;
   if(qty<1){showToast('⚠️ Ingresa cantidad mayor a 0');return;}
   const p=prodActual;
-  const entry={id:Date.now(),
-    codProducto:  p.codProducto||'',
-    codAntiguo:   p.codAntiguo||'',
-    nombre:       p.nombre||'',
-    marca:        p.marca||'',
-    unidad:       p.unidad||'',
-    familia:      p.familia||'',
-    grupo:        p.grupo||'',
-    subgrupo:     p.subgrupo||'',
-    codBarra:     p.codBarra||'',
-    sugerido:     Number(p.sugerido)||0,
-    ccostos:      Number(p.ccostos)||0,
-    bodega:       bodegaActual,
-    cantidad:     qty,
-    ts:           new Date().toISOString(),
-    usuario:      currentUser.email
+  const entry={
+    id:        Date.now(),
+    codProducto: String(p.codProducto||''),
+    codAntiguo:  String(p.codAntiguo||''),
+    nombre:      String(p.nombre||''),
+    marca:       String(p.marca||''),
+    unidad:      String(p.unidad||''),
+    familia:     String(p.familia||''),
+    grupo:       String(p.grupo||''),
+    subgrupo:    String(p.subgrupo||''),
+    codBarra:    String(p.codBarra||''),
+    sugerido:    Number(p.sugerido)||0,
+    ccostos:     Number(p.ccostos)||0,
+    bodega:      bodegaActual,
+    cantidad:    qty,
+    ts:          new Date().toISOString(),
+    usuario:     currentUser.email
   };
   if(editIdx!==null){historial[editIdx]=entry;editIdx=null;showToast('✏️ Modificado');}
   else{historial.unshift(entry);showToast('✅ Enviado');}
@@ -754,8 +684,8 @@ function setTab(t){
 }
 function showToast(msg){
   const t=document.getElementById('toast');
-  const isError = msg.startsWith('⚠️') || msg.startsWith('❌');
-  t.style.background = isError ? 'var(--red)' : 'var(--green)';
+  const isError=msg.startsWith('⚠️')||msg.startsWith('❌');
+  t.style.background=isError?'var(--red)':'var(--green)';
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2300);
 }
