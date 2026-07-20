@@ -428,14 +428,27 @@ async function cargarProductos(){
       if(ultimo)q=q.startAfter(ultimo);
       const snap=await q.get();
       if(snap.empty)break;
-      snap.docs.forEach(d=>todos.push(d.data()));
+      snap.docs.forEach(d=>{
+        const data=d.data();
+        todos.push(data);
+      });
       ultimo=snap.docs[snap.docs.length-1];
     }while(todos.length%1000===0&&todos.length>0);
     PRODS=todos;
-    PRODS.forEach(p=>prodsCache[p.codProducto]=p);
+    PRODS.forEach(p=>{
+      const cod=String(p.codProducto).trim();
+      prodsCache[cod]={
+        ...p,
+        ccostos: Number(p.ccostos)||0,
+        sugerido: Number(p.sugerido)||0
+      };
+    });
     prodsCargados=true;
-    setStatus(`🔥 Firebase · ${PRODS.length} productos listos`);
-  }catch(e){setStatus('⚠️ Error cargando productos');}
+    // Verificar que ccostos llegó
+    const muestra=Object.values(prodsCache).find(p=>p.ccostos>0);
+    if(muestra) setStatus(`🔥 Firebase · ${PRODS.length} productos · ccostos ✅`);
+    else setStatus(`🔥 Firebase · ${PRODS.length} productos · ccostos ⚠️`);
+  }catch(e){setStatus('⚠️ Error cargando productos: '+e.message);}
 }
 
 function buscarLocal(q){
