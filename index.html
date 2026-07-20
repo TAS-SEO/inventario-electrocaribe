@@ -624,12 +624,23 @@ async function enviar(){
   const qty=parseInt(document.getElementById('qinp').value)||0;
   if(qty<1){showToast('⚠️ Ingresa cantidad mayor a 0');return;}
   const p=prodActual;
-  const entry={id:Date.now(),codProducto:p.codProducto||'',codAntiguo:p.codAntiguo||'',
-    nombre:p.nombre||'',marca:p.marca||'',unidad:p.unidad||'',familia:p.familia||'',
-    grupo:p.grupo||'',subgrupo:p.subgrupo||'',codBarra:p.codBarra||'',
-    sugerido:Number(p.sugerido)||0,
-    ccostos:Number(p.ccostos)||0,
-    bodega:bodegaActual,cantidad:qty,ts:new Date().toISOString(),usuario:currentUser.email};
+  const entry={id:Date.now(),
+    codProducto:  p.codProducto||'',
+    codAntiguo:   p.codAntiguo||'',
+    nombre:       p.nombre||'',
+    marca:        p.marca||'',
+    unidad:       p.unidad||'',
+    familia:      p.familia||'',
+    grupo:        p.grupo||'',
+    subgrupo:     p.subgrupo||'',
+    codBarra:     p.codBarra||'',
+    sugerido:     Number(p.sugerido)||0,
+    ccostos:      Number(p.ccostos)||0,
+    bodega:       bodegaActual,
+    cantidad:     qty,
+    ts:           new Date().toISOString(),
+    usuario:      currentUser.email
+  };
   if(editIdx!==null){historial[editIdx]=entry;editIdx=null;showToast('✏️ Modificado');}
   else{historial.unshift(entry);showToast('✅ Enviado');}
   await guardarHistorial();
