@@ -407,7 +407,19 @@ async function cargarDatos(){
       iniciarCron();renderSesionUI();
     }
     if(hSnap.exists)historial=hSnap.data().items||[];
-    tandas=tSnap.docs.map(d=>d.data());
+    tandas=tSnap.docs.map(d=>{
+      const data=d.data();
+      return{
+        ...data,
+        items:(data.items||[]).map(h=>({
+          ...h,
+          ccostos: Number(h.ccostos)||0,
+          sugerido: Number(h.sugerido)||0,
+          cantidad: Number(h.cantidad)||0,
+          codProducto: String(h.codProducto||'').trim()
+        }))
+      };
+    });
   }catch(e){setStatus('⚠️ Error Firebase');}
   await cargarProductos();
   actualizarMetricas();renderHistorial();renderSerie();renderTandas();
